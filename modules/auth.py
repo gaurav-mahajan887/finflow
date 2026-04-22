@@ -61,6 +61,36 @@ def init_db():
     except Exception as e:
         print(f"[auth] DB init error: {e}")
 
+def get_user(username: str):
+    try:
+        con = _conn()
+        cur = con.cursor()
+
+        if USE_POSTGRES:
+            cur.execute(
+                "SELECT id, username, email, created FROM users WHERE username=%s",
+                (username,)
+            )
+        else:
+            cur.execute(
+                "SELECT id, username, email, created FROM users WHERE username=?",
+                (username,)
+            )
+
+        row = cur.fetchone()
+        con.close()
+
+        if row:
+            return {
+                "id": row[0],
+                "username": row[1],
+                "email": row[2],
+                "created": row[3]
+            }
+        return None
+
+    except Exception:
+        return None
 
 # ── Password hashing (SECURE) ────────────────────────────────
 def _hash(password: str) -> str:
