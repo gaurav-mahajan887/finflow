@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Dashboard — FinFlow</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+/* ═══════════════════════════ TOKENS ═══════════════════════════ */
+:root {
+  --bg:          #060d1a;
+  --bg-2:        #0d1829;
+  --bg-card:     rgba(13,24,46,0.75);
+  --bg-hov:      rgba(18,34,64,0.95);
+  --border:      rgba(59,130,246,0.13);
+  --border-hov:  rgba(59,130,246,0.32);
+  --blue:        #3b82f6;
+  --cyan:        #06b6d4;
+  --green:       #22c55e;
+  --green-bg:    rgba(34,197,94,0.12);
+  --red:         #ef4444;
+  --red-bg:      rgba(239,68,68,0.12);
+  --amber:       #f59e0b;
+  --text:        #f1f5f9;
+  --muted:       #64748b;
+  --soft:        #94a3b8;
+  --r-sm:        8px;
+  --r-md:        14px;
+  --r-lg:        20px;
+  --mono:        'JetBrains Mono', monospace;
+  --sans:        'Sora', 'Segoe UI', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(59,130,246,.02) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(59,130,246,.02) 1px,transparent 1px);
+  background-size:52px 52px;
+}
+.z1{position:relative;z-index:1}
+
+/* ═══════════════════════════ TICKER BAR ═══════════════════════════ */
+.ticker-bar{background:rgba(4,9,18,.97);border-bottom:1px solid var(--border);height:34px;overflow:hidden;display:flex;align-items:center;position:relative}
+.ticker-bar::before,.ticker-bar::after{content:'';position:absolute;top:0;bottom:0;width:60px;z-index:2;pointer-events:none}
+.ticker-bar::before{left:0;background:linear-gradient(90deg,var(--bg),transparent)}
+.ticker-bar::after{right:0;background:linear-gradient(-90deg,var(--bg),transparent)}
+.ticker-label{position:absolute;left:0;z-index:3;background:var(--blue);color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:0 12px;height:100%;display:flex;align-items:center;flex-shrink:0}
+.ticker-scroll-wrap{width:100%;overflow:hidden;padding-left:52px}
+.ticker-track{display:inline-flex;align-items:center;white-space:nowrap;animation:tickScroll 45s linear infinite;will-change:transform}
+.ticker-track:hover{animation-play-state:paused}
+@keyframes tickScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ti{display:inline-flex;align-items:center;gap:5px;padding:0 18px 0 0;font-size:.76rem;font-family:var(--mono)}
+.ti .tn{color:var(--soft);font-weight:500}
+.ti .tp{color:var(--text);font-weight:600}
+.ti .tc{font-size:.7rem;font-weight:600}
+.ti .tc.up{color:var(--green)}.ti .tc.down{color:var(--red)}
+.ticker-loading{padding-left:60px;color:var(--muted);font-size:.73rem;font-family:var(--mono)}
+
+/* ═══════════════════════════ LAYOUT ═══════════════════════════ */
+.wrap{max-width:1300px;margin:0 auto;padding:28px 20px 60px}
+
+/* ═══════════════════════════ PAGE HEADER ═══════════════════════════ */
+.ph{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:10px}
+.ph-title{font-size:1.4rem;font-weight:700;letter-spacing:-.4px}
+.ph-title span{color:var(--blue)}
+.ph-sub{font-size:.75rem;color:var(--muted);margin-top:2px}
+.status-pill{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--soft);background:var(--bg-card);border:1px solid var(--border);padding:5px 13px;border-radius:30px}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ═══════════════════════════ INDEX CARDS ═══════════════════════════ */
+.idx-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin-bottom:24px}
+.idx-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 22px;position:relative;overflow:hidden;backdrop-filter:blur(14px);transition:border-color .2s,transform .2s,box-shadow .2s}
+.idx-card:hover{border-color:var(--border-hov);transform:translateY(-3px);box-shadow:0 0 24px rgba(59,130,246,.07)}
+.idx-card::before{content:'';position:absolute;top:0;right:0;width:110px;height:110px;border-radius:50%;filter:blur(38px);opacity:.16;pointer-events:none}
+.idx-card.up::before{background:var(--green)}.idx-card.down::before{background:var(--red)}
+.idx-tag{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.idx-name{font-size:.92rem;font-weight:600;color:var(--soft);margin-bottom:5px}
+.idx-price{font-family:var(--mono);font-size:1.8rem;font-weight:700;letter-spacing:-1px;line-height:1;margin-bottom:9px}
+.idx-chg{display:inline-flex;align-items:center;gap:4px;font-size:.78rem;font-weight:600;font-family:var(--mono);padding:3px 9px;border-radius:5px}
+.idx-chg.up{color:var(--green);background:var(--green-bg)}.idx-chg.down{color:var(--red);background:var(--red-bg)}
+
+/* ═══════════════════════════ SECTOR STRIP ═══════════════════════════ */
+.sector-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:28px;scrollbar-width:none}
+.sector-strip::-webkit-scrollbar{display:none}
+.sec-pill{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;cursor:pointer;transition:all .18s;min-width:90px}
+.sec-pill:hover{border-color:var(--border-hov);background:var(--bg-hov)}
+.sec-pill.up .sec-pct{color:var(--green)}.sec-pill.down .sec-pct{color:var(--red)}
+.sec-name{font-size:.68rem;font-weight:600;color:var(--soft);text-transform:uppercase;letter-spacing:.05em}
+.sec-pct{font-size:.8rem;font-weight:700;font-family:var(--mono)}
+
+/* ═══════════════════════════ MARKET BREADTH ═══════════════════════════ */
+.breadth-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-md);padding:16px 20px;margin-bottom:28px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.breadth-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);flex-shrink:0}
+.breadth-bar-wrap{flex:1;min-width:180px}
+.breadth-bar{height:8px;border-radius:4px;display:flex;overflow:hidden;gap:2px}
+.bb-adv{background:var(--green);border-radius:4px 0 0 4px;transition:width .6s ease}
+.bb-unch{background:var(--muted);transition:width .6s ease}
+.bb-dec{background:var(--red);border-radius:0 4px 4px 0;transition:width .6s ease}
+.breadth-legend{display:flex;gap:16px;margin-top:8px}
+.bl-item{display:flex;align-items:center;gap:5px;font-size:.7rem;color:var(--soft)}
+.bl-dot{width:8px;height:8px;border-radius:50%}
+.breadth-stats{display:flex;gap:20px;flex-shrink:0}
+.bs-item{display:flex;flex-direction:column;align-items:center;gap:1px}
+.bs-val{font-size:1rem;font-weight:700;font-family:var(--mono)}
+.bs-lbl{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+
+/* ═══════════════════════════ SEARCH ═══════════════════════════ */
+.search-wrap{position:relative;max-width:540px;margin-bottom:30px}
+.srch-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.95rem;pointer-events:none}
+#searchBox{width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:11px 15px 11px 42px;color:var(--text);font-family:var(--sans);font-size:.88rem;outline:none;transition:border-color .2s,box-shadow .2s}
+#searchBox::placeholder{color:var(--muted)}
+#searchBox:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.search-btn{position:absolute;right:7px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;color:#fff;padding:6px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;font-family:var(--sans);transition:opacity .15s,transform .15s}
+.search-btn:hover{opacity:.88;transform:translateY(-50%) translateY(-1px)}
+#suggestions{position:absolute;top:calc(100% + 5px);left:0;right:0;background:var(--bg-2);border:1px solid var(--border);border-radius:12px;z-index:500;overflow:hidden;box-shadow:0 14px 36px rgba(0,0,0,.5)}
+.sug-item{padding:10px 15px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:.83rem;border-bottom:1px solid var(--border);transition:background .15s}
+.sug-item:last-child{border-bottom:none}
+.sug-item:hover{background:rgba(59,130,246,.07)}
+.sug-ticker{font-weight:700;color:var(--blue);font-size:.78rem}
+.sug-name{font-size:.72rem;color:var(--muted)}
+.sug-price{font-family:var(--mono);font-weight:600;font-size:.83rem}
+
+/* ═══════════════════════════ SECTION HDR ═══════════════════════════ */
+.sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:16px;margin-top:4px}
+.sec-hdr-title{font-size:.95rem;font-weight:700;letter-spacing:-.2px}
+.sec-hdr-line{flex:1;height:1px;background:var(--border)}
+.sec-hdr-badge{font-size:.68rem;color:var(--muted);background:var(--bg-card);border:1px solid var(--border);padding:2px 9px;border-radius:30px}
+
+/* ═══════════════════════════ TODAYS STOCKS PANEL ═══════════════════════════ */
+.ts-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:36px}
+.ts-tabs{display:flex;border-bottom:1px solid var(--border);background:rgba(6,13,26,.6)}
+.ts-tab{flex:1;padding:12px 8px;text-align:center;font-size:.75rem;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;transition:all .18s;letter-spacing:.03em;border-bottom:2px solid transparent;position:relative}
+.ts-tab:hover{color:var(--soft)}
+.ts-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.ts-tab-icon{font-size:.85rem;display:block;margin-bottom:2px}
+.ts-table{width:100%;border-collapse:collapse}
+.ts-table thead th{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;background:rgba(6,13,26,.4)}
+.ts-table thead th:last-child{text-align:right}
+.ts-table tbody tr{cursor:pointer;border-bottom:1px solid rgba(59,130,246,.06);transition:background .15s}
+.ts-table tbody tr:last-child{border-bottom:none}
+.ts-table tbody tr:hover{background:rgba(59,130,246,.05)}
+.ts-table tbody td{padding:11px 14px;font-size:.83rem;vertical-align:middle}
+.ts-table tbody td:last-child{text-align:right}
+.ts-ticker{font-weight:700;color:var(--blue);font-size:.78rem;font-family:var(--mono)}
+.ts-name{font-size:.72rem;color:var(--muted);margin-top:1px}
+.ts-price{font-family:var(--mono);font-weight:600}
+.ts-chg{display:inline-flex;align-items:center;gap:3px;font-size:.74rem;font-weight:600;font-family:var(--mono);padding:2px 8px;border-radius:5px}
+.ts-chg.up{color:var(--green);background:var(--green-bg)}.ts-chg.down{color:var(--red);background:var(--red-bg)}
+.ts-vol{font-size:.72rem;color:var(--muted);font-family:var(--mono)}
+.ts-add-btn{background:none;border:1px solid var(--border);color:var(--soft);padding:3px 9px;border-radius:6px;font-size:.68rem;font-weight:600;cursor:pointer;transition:all .15s;font-family:var(--sans)}
+.ts-add-btn:hover{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,.08)}
+.ts-add-btn.added{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+.ts-content{display:none}.ts-content.active{display:block}
+
+/* ═══════════════════════════ ADD TO PORTFOLIO MODAL ═══════════════════════════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;width:340px;max-width:95vw;position:relative}
+.modal-close{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal-title{font-size:1rem;font-weight:700;margin-bottom:4px}
+.modal-sub{font-size:.75rem;color:var(--muted);margin-bottom:18px}
+.modal-input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--sans);font-size:.85rem;outline:none;margin-bottom:10px;transition:border-color .2s}
+.modal-input:focus{border-color:var(--blue)}
+.modal-input::placeholder{color:var(--muted)}
+.modal-submit{width:100%;background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;color:#fff;padding:10px;border-radius:9px;font-weight:700;font-size:.85rem;cursor:pointer;font-family:var(--sans);margin-top:4px;transition:opacity .15s}
+.modal-submit:hover{opacity:.88}
+
+/* ═══════════════════════════ TRENDING CARDS ═══════════════════════════ */
+.stock-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;cursor:pointer;transition:border-color .2s,transform .2s,box-shadow .2s;height:100%;position:relative;overflow:hidden;backdrop-filter:blur(12px)}
+.stock-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--blue),var(--cyan));transform:scaleX(0);transition:transform .25s ease;transform-origin:left}
+.stock-card:hover{border-color:var(--border-hov);transform:translateY(-4px);box-shadow:0 8px 28px rgba(0,0,0,.35)}
+.stock-card:hover::after{transform:scaleX(1)}
+.sc-ticker{font-size:.65rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin-bottom:3px;font-family:var(--mono)}
+.sc-name{font-size:.78rem;color:var(--soft);font-weight:500;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-price{font-family:var(--mono);font-size:1.28rem;font-weight:700;letter-spacing:-.5px;margin-bottom:5px}
+.sc-chg{display:inline-flex;align-items:center;gap:3px;font-size:.72rem;font-weight:600;font-family:var(--mono);padding:2px 8px;border-radius:5px}
+.sc-chg.up{color:var(--green);background:var(--green-bg)}.sc-chg.down{color:var(--red);background:var(--red-bg)}
+.sc-mini{height:56px;margin-top:12px}
+
+/* ═══════════════════════════ ACTIVE STRIP ═══════════════════════════ */
+.active-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-md);padding:13px 16px;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.active-card:hover{border-color:var(--border-hov);background:var(--bg-hov);transform:translateX(3px)}
+.ac-ticker{font-size:.8rem;font-weight:700;font-family:var(--mono);color:var(--text)}
+.ac-vol{font-size:.68rem;color:var(--muted)}
+.ac-right{text-align:right}
+.ac-price{font-family:var(--mono);font-size:.95rem;font-weight:600}
+.ac-pct{font-size:.7rem;font-family:var(--mono);font-weight:600}
+.ac-pct.up{color:var(--green)}.ac-pct.down{color:var(--red)}
+
+/* ═══════════════════════════ 52W ═══════════════════════════ */
+.bk-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-sm);padding:13px 15px;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.bk-card:hover{border-color:var(--border-hov);transform:translateX(3px)}
+.bk-ticker{font-size:.8rem;font-weight:700;font-family:var(--mono)}
+.bk-ref{font-size:.68rem;color:var(--muted)}
+.bk-price{font-family:var(--mono);font-size:.9rem;font-weight:600;text-align:right}
+
+/* ═══════════════════════════ GL TABLE ═══════════════════════════ */
+.gl-table{width:100%;border-collapse:separate;border-spacing:0 7px}
+.gl-table thead th{font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:0 11px 4px}
+.gl-table thead th:last-child{text-align:right}
+.gl-table tbody tr{background:var(--bg-card);cursor:pointer;transition:all .16s}
+.gl-table tbody tr:hover{background:var(--bg-hov);transform:translateX(2px)}
+.gl-table tbody td{padding:11px 11px;font-size:.81rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.gl-table tbody td:first-child{border-left:1px solid var(--border);border-radius:var(--r-sm) 0 0 var(--r-sm);font-weight:700;font-family:var(--mono)}
+.gl-table tbody td:last-child{border-right:1px solid var(--border);border-radius:0 var(--r-sm) var(--r-sm) 0;text-align:right}
+.td-price{color:var(--soft);font-family:var(--mono)}
+.badge-up{display:inline-flex;align-items:center;gap:3px;background:var(--green-bg);color:var(--green);padding:2px 8px;border-radius:5px;font-size:.72rem;font-weight:600;font-family:var(--mono)}
+.badge-down{display:inline-flex;align-items:center;gap:3px;background:var(--red-bg);color:var(--red);padding:2px 8px;border-radius:5px;font-size:.72rem;font-weight:600;font-family:var(--mono)}
+
+/* ═══════════════════════════ SKELETON ═══════════════════════════ */
+.sk{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;position:relative}
+.sk::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 25%,rgba(255,255,255,.03) 50%,transparent 75%);background-size:200% 100%;animation:shimmer 1.6s infinite}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ═══════════════════════════ FADE IN ═══════════════════════════ */
+.fi{animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fi:nth-child(2){animation-delay:.06s}.fi:nth-child(3){animation-delay:.12s}.fi:nth-child(4){animation-delay:.18s}
+
+/* ═══════════════════════════ DIVIDER ═══════════════════════════ */
+.divider{height:1px;background:var(--border);margin:32px 0}
+
+@media(max-width:768px){.wrap{padding:16px 12px 40px}.idx-price{font-size:1.35rem}.ts-tab{font-size:.68rem}}
+</style>
+</head>
+
+<body>
+<div class="z1">
+
+{% include 'navbar.html' %}
+
+<!-- ── TICKER BAR ── -->
+<div class="ticker-bar">
+  <div class="ticker-label">LIVE</div>
+  <div id="tickerLoading" class="ticker-loading">Fetching market data…</div>
+  <div class="ticker-scroll-wrap" id="tickerWrap" style="display:none">
+    <div class="ticker-track" id="tickerTrack"></div>
+  </div>
+</div>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<div class="wrap">
+
+  <!-- PAGE HEADER -->
+  <div class="ph fi">
+    <div>
+      <div class="ph-title">Market <span>Dashboard</span></div>
+      <div class="ph-sub" id="lastUpdated">Loading market data…</div>
+    </div>
+    <div class="status-pill"><span class="sdot"></span>NSE · BSE Live</div>
+  </div>
+
+  <!-- INDEX CARDS -->
+  <div class="idx-row" id="idxRow">
+    {% for idx in indices %}
+    <div class="idx-card {{ idx.direction }} fi">
+      <div class="idx-tag">Index</div>
+      <div class="idx-name">{{ idx.name }}</div>
+      <div class="idx-price">{{ "{:,.2f}".format(idx.price) }}</div>
+      <span class="idx-chg {{ idx.direction }}">
+        {{ '▲' if idx.direction == 'up' else '▼' }}
+        {{ "{:+,.2f}".format(idx.change) }} ({{ "{:+.2f}".format(idx.percent) }}%)
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- SECTOR STRIP -->
+  <div class="sector-strip" id="sectorStrip">
+    {% for s in sectors %}
+    <div class="sec-pill {{ s.direction }}" title="{{ s.label }}">
+      <span class="sec-name">{{ s.label }}</span>
+      <span class="sec-pct">{{ '{:+.2f}'.format(s.percent) }}%</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- MARKET BREADTH -->
+  <div class="breadth-card fi" id="breadthCard">
+    <div class="breadth-title">Market Breadth</div>
+    <div class="breadth-bar-wrap">
+      <div class="breadth-bar">
+        <div class="bb-adv" id="bbAdv" style="width:{{ breadth.advance_pct }}%"></div>
+        <div class="bb-unch" id="bbUnch" style="width:{{ breadth.unchanged_pct }}%"></div>
+        <div class="bb-dec" id="bbDec" style="width:{{ breadth.decline_pct }}%"></div>
+      </div>
+      <div class="breadth-legend">
+        <div class="bl-item"><span class="bl-dot" style="background:var(--green)"></span>Advances {{ breadth.advances }}</div>
+        <div class="bl-item"><span class="bl-dot" style="background:var(--muted)"></span>Unchanged {{ breadth.unchanged }}</div>
+        <div class="bl-item"><span class="bl-dot" style="background:var(--red)"></span>Declines {{ breadth.declines }}</div>
+      </div>
+    </div>
+    <div class="breadth-stats">
+      <div class="bs-item">
+        <div class="bs-val" style="color:var(--green)">{{ breadth.advances }}</div>
+        <div class="bs-lbl">Up</div>
+      </div>
+      <div class="bs-item">
+        <div class="bs-val" style="color:var(--red)">{{ breadth.declines }}</div>
+        <div class="bs-lbl">Down</div>
+      </div>
+      <div class="bs-item">
+        <div class="bs-val" style="color:var(--muted)">{{ breadth.unchanged }}</div>
+        <div class="bs-lbl">Flat</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-wrap fi">
+    <span class="srch-icon">🔍</span>
+    <input type="text" id="searchBox" placeholder="Search ticker — e.g. RELIANCE.NS, TCS.NS, HDFCBANK.NS">
+    <button class="search-btn" onclick="searchStock()">Search</button>
+    <div id="suggestions"></div>
+  </div>
+  <div id="skRow" style="display:none" class="row g-3 mb-4">
+    <div class="col-3"><div class="sk" style="height:150px"></div></div>
+    <div class="col-3"><div class="sk" style="height:150px"></div></div>
+    <div class="col-3"><div class="sk" style="height:150px"></div></div>
+    <div class="col-3"><div class="sk" style="height:150px"></div></div>
+  </div>
+
+  <!-- ════ TODAY'S STOCKS ════ -->
+  <div class="sec-hdr">
+    <div class="sec-hdr-title">📅 Today's Stocks</div>
+    <div class="sec-hdr-line"></div>
+    <div class="sec-hdr-badge">Live · NSE</div>
+  </div>
+
+  <div class="ts-panel fi">
+    <!-- TABS -->
+    <div class="ts-tabs">
+      <button class="ts-tab active" onclick="switchTab('gainers',this)">
+        <span class="ts-tab-icon">📈</span>Gainers
+      </button>
+      <button class="ts-tab" onclick="switchTab('losers',this)">
+        <span class="ts-tab-icon">📉</span>Losers
+      </button>
+      <button class="ts-tab" onclick="switchTab('active',this)">
+        <span class="ts-tab-icon">🔥</span>Most Active
+      </button>
+      <button class="ts-tab" onclick="switchTab('highs',this)">
+        <span class="ts-tab-icon">🚀</span>52W High
+      </button>
+      <button class="ts-tab" onclick="switchTab('lows',this)">
+        <span class="ts-tab-icon">🎯</span>52W Low
+      </button>
+    </div>
+
+    <!-- GAINERS -->
+    <div class="ts-content active" id="ts-gainers">
+      <table class="ts-table">
+        <thead><tr><th>Stock</th><th>Price</th><th>Change</th><th>Volume</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for s in todays_stocks.gainers %}
+          <tr onclick="navStock('{{ s.ticker }}')">
+            <td><div class="ts-ticker">{{ s.display }}</div><div class="ts-name">{{ s.name[:28] }}</div></td>
+            <td><span class="ts-price">₹{{ "{:,.2f}".format(s.price) }}</span></td>
+            <td><span class="ts-chg {{ s.direction }}">{{ '▲' if s.direction == 'up' else '▼' }} {{ "{:+.2f}".format(s.percent) }}%</span></td>
+            <td><span class="ts-vol">{{ "{:,}".format(s.volume) }}</span></td>
+            <td onclick="event.stopPropagation()">
+              <button class="ts-add-btn" id="btn-g-{{ loop.index }}" onclick="openAddModal('{{ s.ticker }}','{{ s.name }}',{{ s.price }})">+ Portfolio</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- LOSERS -->
+    <div class="ts-content" id="ts-losers">
+      <table class="ts-table">
+        <thead><tr><th>Stock</th><th>Price</th><th>Change</th><th>Volume</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for s in todays_stocks.losers %}
+          <tr onclick="navStock('{{ s.ticker }}')">
+            <td><div class="ts-ticker">{{ s.display }}</div><div class="ts-name">{{ s.name[:28] }}</div></td>
+            <td><span class="ts-price">₹{{ "{:,.2f}".format(s.price) }}</span></td>
+            <td><span class="ts-chg {{ s.direction }}">{{ '▲' if s.direction == 'up' else '▼' }} {{ "{:+.2f}".format(s.percent) }}%</span></td>
+            <td><span class="ts-vol">{{ "{:,}".format(s.volume) }}</span></td>
+            <td onclick="event.stopPropagation()">
+              <button class="ts-add-btn" onclick="openAddModal('{{ s.ticker }}','{{ s.name }}',{{ s.price }})">+ Portfolio</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- MOST ACTIVE -->
+    <div class="ts-content" id="ts-active">
+      <table class="ts-table">
+        <thead><tr><th>Stock</th><th>Price</th><th>Change</th><th>Avg Volume</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for s in todays_stocks.active %}
+          <tr onclick="navStock('{{ s.ticker }}')">
+            <td><div class="ts-ticker">{{ s.display }}</div><div class="ts-name">{{ s.name[:28] }}</div></td>
+            <td><span class="ts-price">₹{{ "{:,.2f}".format(s.price) }}</span></td>
+            <td><span class="ts-chg {{ s.direction }}">{{ '▲' if s.direction == 'up' else '▼' }} {{ "{:+.2f}".format(s.percent) }}%</span></td>
+            <td><span class="ts-vol">{{ "{:,}".format(s.volume) }}</span></td>
+            <td onclick="event.stopPropagation()">
+              <button class="ts-add-btn" onclick="openAddModal('{{ s.ticker }}','{{ s.name }}',{{ s.price }})">+ Portfolio</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 52W HIGH -->
+    <div class="ts-content" id="ts-highs">
+      <table class="ts-table">
+        <thead><tr><th>Stock</th><th>Price</th><th>52W High</th><th>% from High</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for s in todays_stocks.highs %}
+          <tr onclick="navStock('{{ s.ticker }}')">
+            <td><div class="ts-ticker">{{ s.display }}</div><div class="ts-name">{{ s.name[:28] }}</div></td>
+            <td><span class="ts-price">₹{{ "{:,.2f}".format(s.price) }}</span></td>
+            <td><span class="ts-vol">₹{{ s.high_52 }}</span></td>
+            <td>
+              {% if s.high_52 != 'N/A' and s.high_52 > 0 %}
+              <span class="ts-chg down">{{ "{:.1f}".format(((s.price / s.high_52) - 1) * 100) }}%</span>
+              {% else %}<span class="ts-vol">—</span>{% endif %}
+            </td>
+            <td onclick="event.stopPropagation()">
+              <button class="ts-add-btn" onclick="openAddModal('{{ s.ticker }}','{{ s.name }}',{{ s.price }})">+ Portfolio</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 52W LOW -->
+    <div class="ts-content" id="ts-lows">
+      <table class="ts-table">
+        <thead><tr><th>Stock</th><th>Price</th><th>52W Low</th><th>% from Low</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for s in todays_stocks.lows %}
+          <tr onclick="navStock('{{ s.ticker }}')">
+            <td><div class="ts-ticker">{{ s.display }}</div><div class="ts-name">{{ s.name[:28] }}</div></td>
+            <td><span class="ts-price">₹{{ "{:,.2f}".format(s.price) }}</span></td>
+            <td><span class="ts-vol">₹{{ s.low_52 }}</span></td>
+            <td>
+              {% if s.low_52 != 'N/A' and s.low_52 > 0 %}
+              <span class="ts-chg up">+{{ "{:.1f}".format(((s.price / s.low_52) - 1) * 100) }}%</span>
+              {% else %}<span class="ts-vol">—</span>{% endif %}
+            </td>
+            <td onclick="event.stopPropagation()">
+              <button class="ts-add-btn" onclick="openAddModal('{{ s.ticker }}','{{ s.name }}',{{ s.price }})">+ Portfolio</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div><!-- /ts-panel -->
+
+  <!-- TRENDING -->
+  <div class="sec-hdr"><div class="sec-hdr-title">🔥 Trending</div><div class="sec-hdr-line"></div><div class="sec-hdr-badge">{{ trending|length }} stocks</div></div>
+  <div class="row g-3 mb-4">
+    {% for stock in trending %}
+    <div class="col-md-3 col-6 fi">
+      <div class="stock-card" onclick="navStock('{{ stock.ticker }}')">
+        <div class="sc-ticker">{{ stock.ticker.replace('.NS','') }}</div>
+        <div class="sc-name">{{ stock.name[:22] }}{% if stock.name|length > 22 %}…{% endif %}</div>
+        <div class="sc-price">₹{{ "{:,.2f}".format(stock.price) }}</div>
+        <span class="sc-chg {{ 'up' if stock.change >= 0 else 'down' }}">
+          {{ '▲' if stock.change >= 0 else '▼' }} {{ "{:+.2f}".format(stock.percent) }}%
+        </span>
+        <div class="sc-mini"><canvas id="mini{{ loop.index }}"></canvas></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- MOST ACTIVE -->
+  <div class="sec-hdr"><div class="sec-hdr-title">📊 Most Active</div><div class="sec-hdr-line"></div><div class="sec-hdr-badge">by volume</div></div>
+  <div class="row g-3 mb-4">
+    <div class="col-md-8">
+      {% for stock in active %}
+      <div class="active-card" onclick="navStock('{{ stock.ticker }}')">
+        <div>
+          <div class="ac-ticker">{{ stock.ticker.replace('.NS','') }}</div>
+          <div class="ac-vol">Avg Vol: {{ "{:,}".format(stock.volume) }}</div>
+        </div>
+        <div class="ac-right">
+          <div class="ac-price">₹{{ "{:,.2f}".format(stock.price) }}</div>
+          {% if stock.change is defined %}
+          <div class="ac-pct {{ 'up' if stock.change >= 0 else 'down' }}">
+            {{ '▲' if stock.change >= 0 else '▼' }} {{ "{:+.2f}".format(stock.percent) if stock.percent is defined else '' }}%
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 52W -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="sec-hdr"><div class="sec-hdr-title">🚀 Near 52W High</div><div class="sec-hdr-line"></div></div>
+      {% for h in highs %}
+      <div class="bk-card" onclick="navStock('{{ h.ticker }}')">
+        <div><div class="bk-ticker">{{ h.display }}</div><div class="bk-ref">52W High: ₹{{ h.high }}</div></div>
+        <div class="bk-price">₹{{ "{:,.2f}".format(h.price) }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="col-md-6">
+      <div class="sec-hdr"><div class="sec-hdr-title">📉 Near 52W Low</div><div class="sec-hdr-line"></div></div>
+      {% for l in lows %}
+      <div class="bk-card" onclick="navStock('{{ l.ticker }}')">
+        <div><div class="bk-ticker">{{ l.display }}</div><div class="bk-ref">52W Low: ₹{{ l.low }}</div></div>
+        <div class="bk-price">₹{{ "{:,.2f}".format(l.price) }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- GAINERS / LOSERS -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="sec-hdr"><div class="sec-hdr-title">📈 Top Gainers</div><div class="sec-hdr-line"></div></div>
+      <table class="gl-table">
+        <thead><tr><th>Ticker</th><th>Price</th><th style="text-align:right">Change</th></tr></thead>
+        <tbody>
+          {% for g in gainers %}
+          <tr onclick="navStock('{{ g.ticker }}')">
+            <td>{{ g.display }}</td>
+            <td class="td-price">₹{{ "{:,.2f}".format(g.price) }}</td>
+            <td><span class="badge-up">▲ {{ "{:+.2f}".format(g.percent) }}%</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="col-md-6">
+      <div class="sec-hdr"><div class="sec-hdr-title">📉 Top Losers</div><div class="sec-hdr-line"></div></div>
+      <table class="gl-table">
+        <thead><tr><th>Ticker</th><th>Price</th><th style="text-align:right">Change</th></tr></thead>
+        <tbody>
+          {% for l in losers %}
+          <tr onclick="navStock('{{ l.ticker }}')">
+            <td>{{ l.display }}</td>
+            <td class="td-price">₹{{ "{:,.2f}".format(l.price) }}</td>
+            <td><span class="badge-down">▼ {{ "{:+.2f}".format(l.percent) }}%</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<!-- ════ ADD TO PORTFOLIO MODAL ════ -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modalTitle">Add to Portfolio</div>
+    <div class="modal-sub" id="modalSub">Enter your buy details</div>
+    <input type="number" class="modal-input" id="modalBuyPrice" placeholder="Buy Price (₹)">
+    <input type="number" class="modal-input" id="modalQty" placeholder="Quantity">
+    <button class="modal-submit" onclick="confirmAdd()">Add to Portfolio</button>
+  </div>
+</div>
+
+</div><!-- /z1 -->
+
+<!-- ════ JS ════ -->
+<script>
+const fmt = n => '₹' + Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+/* ── Navigation ── */
+function navStock(ticker){ window.location.href = '/stock/' + ticker; }
+
+/* ── Ticker Bar ── */
+async function loadTicker(){
+  try{
+    const r = await fetch('/api/ticker-bar');
+    const d = await r.json();
+    if(!d||!d.length) return;
+    const track = document.getElementById('tickerTrack');
+    let h = '';
+    for(let p=0;p<2;p++){
+      d.forEach(it=>{
+        const dir=it.direction, s=it.percent>=0?'+':'';
+        h+=`<span class="ti"><span class="tn">${it.display}</span><span class="tp">${fmt(it.price)}</span><span class="tc ${dir}">${dir==='up'?'▲':'▼'} ${s}${it.percent.toFixed(2)}%</span></span><span style="color:var(--border);padding-right:18px">·</span>`;
+      });
+    }
+    track.innerHTML = h;
+    document.getElementById('tickerLoading').style.display='none';
+    document.getElementById('tickerWrap').style.display='block';
+  }catch(e){console.error('[ticker]',e);}
+}
+
+/* ── Index Refresh ── */
+async function refreshIndices(){
+  try{
+    const r = await fetch('/api/indices');
+    const d = await r.json();
+    if(!d||!d.length) return;
+    const row = document.getElementById('idxRow');
+    row.innerHTML = d.map(idx=>{
+      const dir=idx.direction, arr=dir==='up'?'▲':'▼';
+      const pf=Number(idx.price).toLocaleString('en-IN',{minimumFractionDigits:2});
+      const cf=(idx.change>=0?'+':'')+Number(idx.change).toLocaleString('en-IN',{minimumFractionDigits:2});
+      return `<div class="idx-card ${dir} fi">
+        <div class="idx-tag">Index</div>
+        <div class="idx-name">${idx.name}</div>
+        <div class="idx-price">${pf}</div>
+        <span class="idx-chg ${dir}">${arr} ${cf} (${idx.percent>=0?'+':''}${idx.percent.toFixed(2)}%)</span>
+      </div>`;
+    }).join('');
+    document.getElementById('lastUpdated').textContent =
+      'Last updated: '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){console.error('[indices]',e);}
+}
+
+/* ── Today's Stocks Tabs ── */
+function switchTab(name, btn){
+  document.querySelectorAll('.ts-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.ts-tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('ts-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ── Portfolio Modal ── */
+let _modalTicker='', _modalPrice=0;
+function openAddModal(ticker, name, price){
+  _modalTicker = ticker; _modalPrice = price;
+  document.getElementById('modalTitle').textContent = 'Add '+ticker.replace('.NS','')+' to Portfolio';
+  document.getElementById('modalSub').textContent = name + ' · ₹' + Number(price).toLocaleString('en-IN');
+  document.getElementById('modalBuyPrice').value = price;
+  document.getElementById('modalQty').value = '';
+  document.getElementById('addModal').classList.add('open');
+}
+function closeModal(){ document.getElementById('addModal').classList.remove('open'); }
+document.getElementById('addModal').addEventListener('click',function(e){
+  if(e.target===this) closeModal();
+});
+function confirmAdd(){
+  const bp = parseFloat(document.getElementById('modalBuyPrice').value);
+  const qty = parseInt(document.getElementById('modalQty').value);
+  if(!bp||!qty||qty<=0){ alert('Please enter valid buy price and quantity.'); return; }
+  let portfolio = JSON.parse(localStorage.getItem('ff_portfolio')||'[]');
+  const existing = portfolio.findIndex(x=>x.ticker===_modalTicker);
+  if(existing>=0){
+    portfolio[existing].qty += qty;
+  } else {
+    portfolio.push({ ticker:_modalTicker, buyPrice:bp, qty:qty, addedAt:Date.now() });
+  }
+  localStorage.setItem('ff_portfolio', JSON.stringify(portfolio));
+  closeModal();
+  showToast(_modalTicker.replace('.NS','')+' added to portfolio ✓');
+}
+function showToast(msg){
+  let t = document.getElementById('ffToast');
+  if(!t){
+    t = document.createElement('div');
+    t.id='ffToast';
+    Object.assign(t.style,{
+      position:'fixed',bottom:'28px',right:'24px',
+      background:'var(--blue)',color:'#fff',
+      padding:'10px 20px',borderRadius:'10px',
+      fontSize:'.83rem',fontWeight:'600',zIndex:'9999',
+      boxShadow:'0 4px 20px rgba(59,130,246,.4)',
+      transition:'opacity .3s',opacity:'1'
+    });
+    document.body.appendChild(t);
+  }
+  t.textContent=msg; t.style.opacity='1';
+  clearTimeout(t._to);
+  t._to=setTimeout(()=>t.style.opacity='0',2600);
+}
+
+/* ── Search ── */
+const searchBox = document.getElementById('searchBox');
+const suggs = document.getElementById('suggestions');
+let debT;
+searchBox.addEventListener('input',()=>{
+  clearTimeout(debT);
+  const q=searchBox.value.trim();
+  if(!q){ suggs.innerHTML=''; return; }
+  debT=setTimeout(async()=>{
+    try{
+      const r=await fetch(`/autocomplete?q=${encodeURIComponent(q)}`);
+      const d=await r.json();
+      if(!d.length){ suggs.innerHTML=''; return; }
+      suggs.innerHTML=d.map(it=>`
+        <div class="sug-item" onclick="navStock('${it.ticker}')">
+          <div><div class="sug-ticker">${it.ticker}</div><div class="sug-name">${it.name}</div></div>
+          <span class="sug-price">${fmt(it.price)}</span>
+        </div>`).join('');
+    }catch(e){console.error(e);}
+  },280);
+});
+document.addEventListener('click',e=>{ if(!e.target.closest('.search-wrap')) suggs.innerHTML=''; });
+function searchStock(){
+  const t=searchBox.value.trim();
+  if(!t) return;
+  document.getElementById('skRow').style.display='flex';
+  setTimeout(()=>navStock(t.toUpperCase()),400);
+}
+searchBox.addEventListener('keydown',e=>{ if(e.key==='Enter') searchStock(); });
+
+/* ── Mini Charts ── */
+const miniData  = {{ trending | map(attribute='mini_chart') | list | tojson }};
+const miniSigns = [{% for s in trending %}{{ 1 if s.change >= 0 else -1 }}{% if not loop.last %},{% endif %}{% endfor %}];
+document.addEventListener('DOMContentLoaded',()=>{
+  miniData.forEach((cd,i)=>{
+    const ctx=document.getElementById(`mini${i+1}`);
+    if(!ctx) return;
+    const pos=miniSigns[i]>=0;
+    new Chart(ctx,{
+      type:'line',
+      data:{labels:cd.map((_,j)=>j),datasets:[{data:cd,borderColor:pos?'#22c55e':'#ef4444',borderWidth:1.8,pointRadius:0,fill:true,tension:.35,backgroundColor:pos?'rgba(34,197,94,.07)':'rgba(239,68,68,.07)'}]},
+      options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}
+    });
+  });
+});
+
+/* ── Init ── */
+loadTicker();
+refreshIndices();
+setInterval(refreshIndices, 60000);
+</script>
+</body>
+</html>
+

@@ -1,0 +1,52 @@
+body {
+    background-color: #f5f7fa;
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+section.hero {
+    background-color: #e9f2ff;
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.card h5 {
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+footer {
+    background-color: #1f2937;
+    color: white;
+}
+
+.flash {
+    padding: 10px;
+    margin: 10px auto;
+    width: 90%;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.flash-danger {
+    background-color: #f8d7da;
+    color: #842029;
+}
+
+button {
+    cursor: pointer;
+}
+
+.chart-space {
+    margin-right: 40px;
+}
+
+.card-box:hover {
+    transform: translateY(-5px);
+    transition: 0.2s;
+}

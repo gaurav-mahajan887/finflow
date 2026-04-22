@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Signal Engine — FinFlow Quant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+:root{--bg:#060d1a;--bg-2:#0d1829;--bg-card:rgba(13,24,46,.75);--border:rgba(59,130,246,.13);--border-hov:rgba(59,130,246,.35);--blue:#3b82f6;--cyan:#06b6d4;--green:#22c55e;--green-bg:rgba(34,197,94,.12);--red:#ef4444;--red-bg:rgba(239,68,68,.12);--amber:#f59e0b;--amber-bg:rgba(245,158,11,.12);--text:#f1f5f9;--muted:#64748b;--soft:#94a3b8;--mono:'JetBrains Mono',monospace;--sans:'Sora','Segoe UI',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(59,130,246,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.022) 1px,transparent 1px);background-size:52px 52px}
+.z1{position:relative;z-index:1}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 20px 80px}
+.page-hdr{margin-bottom:28px}
+.page-hdr a{color:var(--blue);text-decoration:none;font-size:.75rem}
+.page-title{font-size:1.5rem;font-weight:800;letter-spacing:-.4px;margin-top:6px}
+.page-sub{font-size:.78rem;color:var(--muted);margin-top:3px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:22px;margin-bottom:16px}
+.card-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:6px}
+.card-title::before{content:'';display:block;width:3px;height:12px;background:var(--amber);border-radius:2px}
+
+/* Ticker input chips */
+.chip-wrap{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;min-height:36px;padding:6px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px}
+.chip{display:inline-flex;align-items:center;gap:5px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:6px;padding:3px 10px;font-size:.75rem;font-weight:700;color:#93c5fd;font-family:var(--mono)}
+.chip-remove{background:none;border:none;color:#64748b;cursor:pointer;font-size:.8rem;padding:0;line-height:1;transition:color .15s}
+.chip-remove:hover{color:var(--red)}
+.add-row{display:flex;gap:8px}
+.add-input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:9px;padding:9px 13px;color:var(--text);font-family:var(--sans);font-size:.87rem;outline:none;transition:border-color .2s}
+.add-input::placeholder{color:var(--muted)}
+.add-input:focus{border-color:var(--amber)}
+.add-btn{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--amber);padding:9px 16px;border-radius:9px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:var(--sans);transition:all .18s;white-space:nowrap}
+.add-btn:hover{background:rgba(245,158,11,.25)}
+.run-btn{background:linear-gradient(135deg,var(--amber),#d97706);border:none;color:#fff;padding:11px 24px;border-radius:10px;font-weight:700;font-size:.88rem;cursor:pointer;font-family:var(--sans);transition:opacity .15s;margin-top:10px}
+.run-btn:hover{opacity:.88}
+
+/* DEFAULT TICKERS */
+.default-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.def-chip{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:.72rem;font-family:var(--mono);color:var(--soft);cursor:pointer;transition:all .15s}
+.def-chip:hover{border-color:rgba(245,158,11,.4);color:var(--amber)}
+
+/* SIGNALS TABLE */
+.sig-table{width:100%;border-collapse:separate;border-spacing:0 8px}
+.sig-table th{font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 12px 4px;text-align:left}
+.sig-table tbody tr{background:var(--bg-card);cursor:pointer;transition:all .18s}
+.sig-table tbody tr:hover{background:rgba(18,34,64,.9)}
+.sig-table tbody td{padding:13px 12px;font-size:.82rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.sig-table tbody td:first-child{border-left:1px solid var(--border);border-radius:10px 0 0 10px}
+.sig-table tbody td:last-child{border-right:1px solid var(--border);border-radius:0 10px 10px 0}
+
+.sig-ticker{font-weight:700;font-family:var(--mono);font-size:.8rem;color:var(--blue)}
+.sig-price{font-family:var(--mono);font-weight:600;color:#f1f5f9}
+.sig-pct{font-family:var(--mono);font-size:.78rem;font-weight:600}
+.sig-pct.pos{color:var(--green)}.sig-pct.neg{color:var(--red)}
+
+.signal-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:7px;font-size:.75rem;font-weight:800;letter-spacing:.05em}
+.signal-BUY {background:var(--green-bg);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.signal-SELL{background:var(--red-bg);  color:var(--red);  border:1px solid rgba(239,68,68,.3)}
+.signal-HOLD{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
+.signal-NA  {background:rgba(148,163,184,.1);color:var(--muted)}
+
+.rsi-bar-wrap{width:80px;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:6px}
+.rsi-bar{height:100%;border-radius:3px;transition:width .4s ease}
+
+/* Detail expand */
+.sig-reason{font-size:.72rem;color:var(--muted);margin-top:3px;line-height:1.4}
+
+.loader{text-align:center;padding:32px;color:var(--muted);display:none}
+.spinner{width:28px;height:28px;border:2px solid rgba(245,158,11,.25);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fi{animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body><div class="z1">
+{% include 'navbar.html' %}
+<div class="wrap">
+
+  <div class="page-hdr fi">
+    <a href="/quant">← Quant Hub</a>
+    <div class="page-title">🎯 Signal Engine</div>
+    <div class="page-sub">Rule-based BUY / HOLD / SELL signals using momentum, RSI, moving average crossovers and Sharpe ratio</div>
+  </div>
+
+  <div class="card fi">
+    <div class="card-title">Select Stocks</div>
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px">Quick add:</div>
+    <div class="default-chips" id="defaultChips">
+      {% for t in ['RELIANCE.NS','TCS.NS','INFY.NS','HDFCBANK.NS','ICICIBANK.NS','SBIN.NS','WIPRO.NS','AXISBANK.NS','TATAMOTORS.NS','MARUTI.NS'] %}
+      <span class="def-chip" onclick="addTicker('{{t}}')">{{ t.replace('.NS','') }}</span>
+      {% endfor %}
+    </div>
+    <div class="chip-wrap" id="chipWrap"></div>
+    <div class="add-row">
+      <input class="add-input" id="tickerInput" placeholder="Type ticker and press Enter — e.g. HCLTECH.NS">
+      <button class="add-btn" onclick="addFromInput()">+ Add</button>
+    </div>
+    <button class="run-btn" onclick="runSignals()">🎯 Generate Signals</button>
+  </div>
+
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    Fetching 6-month data and computing signals for all tickers…<br>
+    <small style="font-size:.7rem;margin-top:4px;display:block">This may take 15–30 seconds</small>
+  </div>
+
+  <div id="resultsWrap" style="display:none">
+    <div class="card fi">
+      <div class="card-title">Signal Results</div>
+      <div style="overflow-x:auto">
+        <table class="sig-table">
+          <thead>
+            <tr>
+              <th>Stock</th>
+              <th>Signal</th>
+              <th>Score</th>
+              <th>Price</th>
+              <th>1M Mom</th>
+              <th>3M Mom</th>
+              <th>RSI</th>
+              <th>Sharpe</th>
+              <th>Vol%</th>
+              <th>MA Cross</th>
+            </tr>
+          </thead>
+          <tbody id="signalBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card fi" id="summaryCard">
+      <div class="card-title">Summary</div>
+      <div id="summaryContent" style="display:flex;gap:16px;flex-wrap:wrap"></div>
+    </div>
+  </div>
+
+</div></div>
+
+<script>
+let tickers = [];
+
+function addTicker(t){
+  t = t.trim().toUpperCase();
+  if(!t || tickers.includes(t)) return;
+  if(tickers.length >= 15){ alert('Max 15 stocks for signals.'); return; }
+  if(!t.includes('.')){ t += '.NS'; }
+  tickers.push(t);
+  renderChips();
+}
+function addFromInput(){
+  addTicker(document.getElementById('tickerInput').value);
+  document.getElementById('tickerInput').value = '';
+}
+function removeTicker(t){
+  tickers = tickers.filter(x=>x!==t);
+  renderChips();
+}
+function renderChips(){
+  document.getElementById('chipWrap').innerHTML = tickers.map(t=>`
+    <span class="chip">${t.replace('.NS','')}
+      <button class="chip-remove" onclick="removeTicker('${t}')">✕</button>
+    </span>`).join('');
+}
+document.getElementById('tickerInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){ addFromInput(); }
+});
+
+// Pre-load 4 defaults
+['RELIANCE.NS','TCS.NS','HDFCBANK.NS','INFY.NS'].forEach(addTicker);
+
+async function runSignals(){
+  if(!tickers.length){ alert('Add at least one ticker.'); return; }
+  document.getElementById('loader').style.display       = 'block';
+  document.getElementById('resultsWrap').style.display  = 'none';
+
+  try{
+    const r = await fetch('/api/quant/signals', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({tickers})
+    });
+    const data = await r.json();
+    if(!data.ok) throw new Error(data.error||'Signal computation failed');
+
+    const tbody = document.getElementById('signalBody');
+    tbody.innerHTML = data.signals.map(s=>{
+      if(s.error) return `<tr><td colspan="10" style="color:var(--muted);font-size:.78rem">${s.display}: ${s.error}</td></tr>`;
+      const mom1c = s.mom_1m>=0?'pos':'neg';
+      const mom3c = s.mom_3m>=0?'pos':'neg';
+      const rsiColor = s.rsi<30?'var(--green)':s.rsi>70?'var(--red)':'var(--amber)';
+      const gcText  = s.golden_cross?'<span style="color:var(--green);font-size:.72rem">Golden ✓</span>':'<span style="color:var(--red);font-size:.72rem">Death ✗</span>';
+      return `<tr onclick="window.location.href='/stock/${s.ticker}'">
+        <td>
+          <div class="sig-ticker">${s.display}</div>
+          <div class="sig-reason">${(s.reason||'').slice(0,60)}…</div>
+        </td>
+        <td><span class="signal-badge signal-${s.signal}">${s.signal==='BUY'?'▲':'▼'} ${s.signal}</span></td>
+        <td><span style="font-family:var(--mono);font-weight:700;color:${s.score>=5?'var(--green)':s.score<=0?'var(--red)':'var(--amber)'}">${s.score}</span></td>
+        <td class="sig-price">₹${s.price}</td>
+        <td><span class="sig-pct ${mom1c}">${s.mom_1m>=0?'+':''}${s.mom_1m}%</span></td>
+        <td><span class="sig-pct ${mom3c}">${s.mom_3m>=0?'+':''}${s.mom_3m}%</span></td>
+        <td>
+          <span style="font-family:var(--mono);font-size:.78rem;color:${rsiColor}">${s.rsi}</span>
+          <span class="rsi-bar-wrap"><span class="rsi-bar" style="width:${s.rsi}%;background:${rsiColor}"></span></span>
+        </td>
+        <td style="font-family:var(--mono);font-size:.78rem;color:${s.sharpe>=1?'var(--green)':s.sharpe>=0?'var(--amber)':'var(--red)'}">${s.sharpe}</td>
+        <td style="font-family:var(--mono);font-size:.78rem;color:${s.volatility<25?'var(--green)':s.volatility<40?'var(--amber)':'var(--red)'}">${s.volatility}%</td>
+        <td>${gcText}</td>
+      </tr>`;
+    }).join('');
+
+    // Summary counts
+    const buys  = data.signals.filter(s=>s.signal==='BUY').length;
+    const sells = data.signals.filter(s=>s.signal==='SELL').length;
+    const holds = data.signals.filter(s=>s.signal==='HOLD').length;
+    document.getElementById('summaryContent').innerHTML = `
+      <div style="background:var(--green-bg);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:14px 20px;text-align:center;min-width:100px">
+        <div style="font-family:var(--mono);font-size:1.6rem;font-weight:800;color:var(--green)">${buys}</div>
+        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">BUY</div>
+      </div>
+      <div style="background:var(--amber-bg);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:14px 20px;text-align:center;min-width:100px">
+        <div style="font-family:var(--mono);font-size:1.6rem;font-weight:800;color:var(--amber)">${holds}</div>
+        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">HOLD</div>
+      </div>
+      <div style="background:var(--red-bg);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:14px 20px;text-align:center;min-width:100px">
+        <div style="font-family:var(--mono);font-size:1.6rem;font-weight:800;color:var(--red)">${sells}</div>
+        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">SELL</div>
+      </div>
+      <div style="font-size:.78rem;color:var(--soft);align-self:center;padding:8px">
+        Signals are rule-based and should not be used as standalone investment advice.
+      </div>`;
+
+    document.getElementById('resultsWrap').style.display = 'block';
+  }catch(e){
+    alert('Error: '+e.message);
+  }finally{
+    document.getElementById('loader').style.display = 'none';
+  }
+}
+</script>
+</body></html>

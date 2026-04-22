@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financial Analysis — FinFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+:root{--bg:#060d1a;--bg-2:#0d1829;--bg-card:rgba(13,24,46,.75);--bg-hov:rgba(18,34,64,.9);--border:rgba(59,130,246,.13);--border-hov:rgba(59,130,246,.35);--blue:#3b82f6;--cyan:#06b6d4;--green:#22c55e;--green-bg:rgba(34,197,94,.12);--red:#ef4444;--red-bg:rgba(239,68,68,.12);--amber:#f59e0b;--purple:#a855f7;--text:#f1f5f9;--muted:#64748b;--soft:#94a3b8;--mono:'JetBrains Mono',monospace;--sans:'Sora','Segoe UI',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(59,130,246,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.025) 1px,transparent 1px);background-size:52px 52px}
+.z1{position:relative;z-index:1}
+.wrap{max-width:1180px;margin:0 auto;padding:40px 20px 80px}
+
+/* HERO */
+.fin-hero{text-align:center;padding:48px 20px 40px;position:relative}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);color:var(--blue);font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:5px 14px;border-radius:30px;margin-bottom:18px}
+.hero-title{font-size:2.6rem;font-weight:800;letter-spacing:-.8px;line-height:1.15;margin-bottom:12px}
+.hero-title .accent{background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:.95rem;color:var(--soft);max-width:540px;margin:0 auto 36px;line-height:1.6}
+
+/* SEARCH BOX */
+.analysis-box{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:28px;max-width:620px;margin:0 auto 48px;backdrop-filter:blur(14px)}
+.ab-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.ab-title::before{content:'';display:block;width:3px;height:12px;background:var(--blue);border-radius:2px}
+.ab-row{display:flex;gap:10px;margin-bottom:14px}
+.ab-input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:var(--sans);font-size:.9rem;outline:none;transition:border-color .2s,box-shadow .2s}
+.ab-input::placeholder{color:var(--muted)}
+.ab-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.ab-btn{background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;color:#fff;padding:11px 20px;border-radius:10px;font-weight:700;font-size:.85rem;cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:opacity .15s}
+.ab-btn:hover{opacity:.88}
+.ab-modes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mode-btn{background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:13px 16px;cursor:pointer;transition:all .2s;text-align:left;display:flex;align-items:center;gap:12px}
+.mode-btn:hover{border-color:var(--border-hov);background:var(--bg-hov)}
+.mode-icon{font-size:1.3rem;flex-shrink:0}
+.mode-label{font-size:.82rem;font-weight:700;color:var(--text);display:block}
+.mode-desc{font-size:.68rem;color:var(--muted)}
+
+/* PREVIEW CARD */
+.ticker-preview{display:none;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.tp-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.tp-name{font-weight:700;font-size:.92rem}
+.tp-ticker{font-size:.68rem;color:var(--blue);font-family:var(--mono)}
+.tp-stats{display:flex;gap:14px}
+.tp-stat{text-align:right}
+.tp-stat-val{font-family:var(--mono);font-size:.85rem;font-weight:600}
+.tp-stat-lbl{font-size:.62rem;color:var(--muted)}
+
+/* TOOLS GRID */
+.tools-section-title{font-size:1.1rem;font-weight:700;margin-bottom:6px}
+.tools-section-sub{font-size:.8rem;color:var(--muted);margin-bottom:22px}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:48px}
+.tool-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:22px 18px;cursor:pointer;text-decoration:none;transition:all .22s;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden}
+.tool-card::before{content:'';position:absolute;inset:0;border-radius:16px;opacity:0;transition:opacity .2s}
+.tool-card:hover{border-color:var(--border-hov);transform:translateY(-5px);box-shadow:0 12px 32px rgba(0,0,0,.4)}
+.tool-card:hover::before{opacity:1}
+.tc-icon{font-size:1.8rem;line-height:1}
+.tc-name{font-size:.9rem;font-weight:700;color:var(--text)}
+.tc-desc{font-size:.72rem;color:var(--muted);line-height:1.5}
+.tc-arrow{font-size:.8rem;color:var(--blue);margin-top:auto;opacity:0;transform:translateX(-4px);transition:all .2s}
+.tool-card:hover .tc-arrow{opacity:1;transform:translateX(0)}
+
+/* card accent colors */
+.tc-blue::before{background:radial-gradient(circle at top left,rgba(59,130,246,.08),transparent 60%)}
+.tc-green::before{background:radial-gradient(circle at top left,rgba(34,197,94,.08),transparent 60%)}
+.tc-amber::before{background:radial-gradient(circle at top left,rgba(245,158,11,.08),transparent 60%)}
+.tc-red::before{background:radial-gradient(circle at top left,rgba(239,68,68,.08),transparent 60%)}
+.tc-purple::before{background:radial-gradient(circle at top left,rgba(168,85,247,.08),transparent 60%)}
+.tc-cyan::before{background:radial-gradient(circle at top left,rgba(6,182,212,.08),transparent 60%)}
+
+/* STATS STRIP */
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:40px}
+.ss-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:18px 16px;text-align:center}
+.ss-val{font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--blue);margin-bottom:4px}
+.ss-lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+
+/* LOADING SPINNER */
+.spin{display:none;width:18px;height:18px;border:2px solid rgba(59,130,246,.3);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.fi{animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){.hero-title{font-size:1.8rem}.ab-modes{grid-template-columns:1fr}.stats-strip{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="z1">
+{% include 'navbar.html' %}
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="fin-hero fi">
+    <div class="hero-badge">📊 FinFlow Analytics</div>
+    <h1 class="hero-title">Professional <span class="accent">Financial Analysis</span><br>for Indian Equities</h1>
+    <p class="hero-sub">DCF valuation, balance sheet analysis, ratio screening, and full research reports — all in one place.</p>
+  </div>
+
+  <!-- START ANALYSIS BOX -->
+  <div class="analysis-box fi">
+    <div class="ab-title">Start Analysis</div>
+    <div class="ticker-preview" id="tickerPreview">
+      <div class="tp-row">
+        <div><div class="tp-name" id="prevName">—</div><div class="tp-ticker" id="prevTicker">—</div></div>
+        <div class="tp-stats">
+          <div class="tp-stat"><div class="tp-stat-val" id="prevPrice">—</div><div class="tp-stat-lbl">Price</div></div>
+          <div class="tp-stat"><div class="tp-stat-val" id="prevPE">—</div><div class="tp-stat-lbl">P/E</div></div>
+          <div class="tp-stat"><div class="tp-stat-val" id="prevROE">—</div><div class="tp-stat-lbl">ROE %</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="ab-row">
+      <input type="text" class="ab-input" id="mainTicker" placeholder="Enter ticker — e.g. RELIANCE.NS, TCS.NS" oninput="previewTicker()">
+      <div class="spin" id="prevSpin"></div>
+    </div>
+    <div class="ab-modes">
+      <div class="mode-btn" onclick="goQuick()">
+        <div class="mode-icon">⚡</div>
+        <div><span class="mode-label">Quick Analysis</span><span class="mode-desc">Key ratios, flags & scores</span></div>
+      </div>
+      <div class="mode-btn" onclick="goReport()">
+        <div class="mode-icon">📑</div>
+        <div><span class="mode-label">Full Research Report</span><span class="mode-desc">Complete equity deep-dive</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS STRIP -->
+  <div class="stats-strip fi">
+    <div class="ss-card"><div class="ss-val">9</div><div class="ss-lbl">Analysis Tools</div></div>
+    <div class="ss-card"><div class="ss-val">DCF</div><div class="ss-lbl">Valuation Model</div></div>
+    <div class="ss-card"><div class="ss-val">10+</div><div class="ss-lbl">Key Metrics</div></div>
+    <div class="ss-card"><div class="ss-val">Live</div><div class="ss-lbl">yFinance Data</div></div>
+  </div>
+
+  <!-- TOOLS GRID -->
+  <div class="tools-section-title">📦 Analysis Tools</div>
+  <div class="tools-section-sub">Select any tool below to start your analysis independently</div>
+  <div class="tools-grid fi">
+    <a href="/input" class="tool-card tc-blue">
+      <div class="tc-icon">📊</div>
+      <div class="tc-name">DCF Valuation</div>
+      <div class="tc-desc">Calculate intrinsic value using discounted cash flow with custom assumptions.</div>
+      <div class="tc-arrow">→ Open tool</div>
+    </a>
+    <a href="/balance-sheet" class="tool-card tc-green">
+      <div class="tc-icon">🧾</div>
+      <div class="tc-name">Balance Sheet</div>
+      <div class="tc-desc">Analyse assets, liabilities, equity and liquidity ratios.</div>
+      <div class="tc-arrow">→ Open tool</div>
+    </a>
+    <a href="/profit_statement" class="tool-card tc-amber">
+      <div class="tc-icon">📈</div>
+      <div class="tc-name">Profit & Income</div>
+      <div class="tc-desc">Revenue trends, net margins, EBITDA and profitability scoring.</div>
+      <div class="tc-arrow">→ Open tool</div>
+    </a>
+    <a href="/ratio_analysis" class="tool-card tc-red">
+      <div class="tc-icon">📉</div>
+      <div class="tc-name">Ratio Analysis</div>
+      <div class="tc-desc">Full ratio screening: liquidity, leverage, efficiency and valuation.</div>
+      <div class="tc-arrow">→ Open tool</div>
+    </a>
+    <a href="/research-report" class="tool-card tc-purple">
+      <div class="tc-icon">📑</div>
+      <div class="tc-name">Research Report</div>
+      <div class="tc-desc">Automated equity research: DCF + ratios + risk + final verdict.</div>
+      <div class="tc-arrow">→ Open tool</div>
+    </a>
+    <a href="/compare" class="tool-card tc-cyan">
+      <div class="tc-icon">⚖️</div>
+      <div class="tc-name">Compare Stocks</div>
+      <div class="tc-desc">Side-by-side fundamental comparison of any two NSE stocks.</div>
+      <div class="tc-arrow">→ Open tool</div>
+    </a>
+  </div>
+
+</div>
+</div>
+
+<script>
+let previewTimer;
+function previewTicker(){
+  clearTimeout(previewTimer);
+  const t = document.getElementById('mainTicker').value.trim().toUpperCase();
+  if(!t){ document.getElementById('tickerPreview').style.display='none'; return; }
+  previewTimer = setTimeout(async()=>{
+    document.getElementById('prevSpin').style.display='block';
+    try{
+      const r = await fetch('/api/financial-preview/'+t);
+      const d = await r.json();
+      if(d.ok){
+        document.getElementById('prevName').textContent    = d.name;
+        document.getElementById('prevTicker').textContent  = d.ticker + ' · ' + d.sector;
+        document.getElementById('prevPrice').textContent   = '₹'+d.price.toLocaleString('en-IN');
+        document.getElementById('prevPE').textContent      = d.pe || '—';
+        document.getElementById('prevROE').textContent     = d.roe+'%';
+        document.getElementById('tickerPreview').style.display='block';
+      }
+    }catch(e){}
+    document.getElementById('prevSpin').style.display='none';
+  }, 600);
+}
+function getTicker(){ return document.getElementById('mainTicker').value.trim().toUpperCase(); }
+function goQuick(){
+  const t=getTicker();
+  if(!t){alert('Please enter a ticker symbol first.');return;}
+  window.location.href='/ratio_analysis';
+}
+function goReport(){
+  const t=getTicker();
+  if(!t){alert('Please enter a ticker symbol first.');return;}
+  // POST to research report
+  const form=document.createElement('form');
+  form.method='POST';form.action='/research-report';
+  const inp=document.createElement('input');
+  inp.type='hidden';inp.name='ticker';inp.value=t;
+  form.appendChild(inp);document.body.appendChild(form);form.submit();
+}
+document.getElementById('mainTicker').addEventListener('keydown',e=>{
+  if(e.key==='Enter') goReport();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!-- FinFlow Global Navbar — with real auth state -->
+<nav class="ff-navbar">
+  <div class="ff-nav-inner">
+
+    <!-- LOGO -->
+    <a class="ff-logo" href="/">
+      <span class="ff-logo-icon">
+        <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
+          <polyline points="2,16 7,10 11,13 16,6 20,8"
+            stroke="#3b82f6" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="20" cy="8" r="2" fill="#06b6d4"/>
+        </svg>
+      </span>
+      <span class="ff-logo-text">Fin<span class="ff-logo-accent">Flow</span></span>
+    </a>
+
+    <!-- NAV LINKS -->
+    <div class="ff-nav-links">
+      <a href="/"         class="ff-nav-link {% if request.endpoint=='home' %}active{% endif %}">🏠 Home</a>
+      <a href="/market"   class="ff-nav-link {% if request.endpoint=='market' %}active{% endif %}">📊 Market</a>
+      <a href="/tools"    class="ff-nav-link {% if request.endpoint in ['tools','financials_home','input_page','balance_sheet','profit_statement','ratio_analysis','research_report','compare'] %}active{% endif %}">🛠 Analysis</a>
+      <a href="/watchlist"class="ff-nav-link {% if request.endpoint=='watchlist' %}active{% endif %}">💼 Portfolio</a>
+      <a href="/news"     class="ff-nav-link {% if request.endpoint=='news' %}active{% endif %}">📰 News</a>
+      <a href="/quant" class="ff-nav-link {% if request.endpoint in ['quant','quant_signals','quant_forecast','quant_optimizer','quant_risk'] %}active{% endif %}">
+  ⚡ Quant
+</a>
+    </div>
+
+    <!-- RIGHT: AUTH STATE -->
+    <div class="ff-nav-auth">
+      {% if session.get('user') %}
+        <!-- LOGGED IN STATE -->
+        <div class="ff-user-menu" id="userMenu">
+          <button class="ff-user-btn" onclick="toggleUserMenu()">
+            <span class="ff-user-avatar">{{ session['user'][0].upper() }}</span>
+            <span class="ff-user-name">{{ session['user'] }}</span>
+            <span class="ff-user-chevron">▾</span>
+          </button>
+          <div class="ff-user-dropdown" id="userDropdown">
+            <div class="ff-dd-header">
+              <div class="ff-dd-name">{{ session['user'] }}</div>
+              <div class="ff-dd-label">FinFlow Member</div>
+            </div>
+            <div class="ff-dd-divider"></div>
+            <a href="/watchlist" class="ff-dd-item">💼 My Portfolio</a>
+            <a href="/research-report" class="ff-dd-item">📑 Research Reports</a>
+            <div class="ff-dd-divider"></div>
+            <a href="/logout" class="ff-dd-item ff-dd-logout">🚪 Logout</a>
+          </div>
+        </div>
+      {% else %}
+        <!-- LOGGED OUT STATE -->
+        <a href="/login"  class="ff-btn-ghost">Login</a>
+        <a href="/signup" class="ff-btn-primary">Sign Up</a>
+      {% endif %}
+    </div>
+
+  </div>
+</nav>
+
+<!-- Flash messages (shown on all pages) -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div id="flashBanner" style="position:fixed;top:62px;left:50%;transform:translateX(-50%);z-index:800;min-width:320px;max-width:520px;padding:0 16px">
+  {% for cat, msg in messages %}
+  <div class="ff-flash ff-flash-{{ cat }}" onclick="this.parentElement.style.display='none'">
+    {{ '✅' if cat=='success' else 'ℹ️' if cat=='info' else '⚠️' }} {{ msg }}
+    <span class="ff-flash-close">✕</span>
+  </div>
+  {% endfor %}
+</div>
+<script>setTimeout(()=>{const b=document.getElementById('flashBanner');if(b)b.style.opacity='0';},3500);</script>
+{% endif %}
+{% endwith %}
+
+<!-- Global Login Popup (for non-logged-in users) -->
+{% if not session.get('user') %}
+<div class="popup-overlay" id="loginModal">
+  <div class="popup-box">
+    <button class="popup-close" onclick="closePopup()">✕</button>
+    <div class="popup-icon-wrap">🔐</div>
+    <div class="popup-title">Save your progress &amp; unlock insights</div>
+    <p class="popup-sub">Create a free account to save your portfolio, access full research reports and get personalised alerts on your tracked stocks.</p>
+    <div class="popup-perks">
+      <div class="perk"><span class="perk-dot"></span>Save &amp; sync watchlist across devices</div>
+      <div class="perk"><span class="perk-dot"></span>Access full research reports &amp; DCF history</div>
+      <div class="perk"><span class="perk-dot"></span>Alerts on your tracked stocks</div>
+    </div>
+    <div class="popup-btns">
+      <a href="/signup" class="popup-btn-primary">🚀 Create Free Account</a>
+      <a href="/login"  class="popup-btn-outline">Login to existing account</a>
+      <button class="popup-btn-later" onclick="closePopup()">Maybe later — remind me tomorrow</button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<style>
+/* ── Navbar base ── */
+.ff-navbar{position:sticky;top:0;z-index:900;background:rgba(4,8,18,.93);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(59,130,246,.14);font-family:'Sora','Segoe UI',sans-serif}
+.ff-nav-inner{max-width:1280px;margin:0 auto;padding:0 24px;height:58px;display:flex;align-items:center;gap:24px}
+
+/* Logo */
+.ff-logo{display:flex;align-items:center;gap:9px;text-decoration:none;flex-shrink:0}
+.ff-logo-icon{width:34px;height:34px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.28);border-radius:9px;display:flex;align-items:center;justify-content:center}
+.ff-logo-text{font-size:1.15rem;font-weight:700;color:#f1f5f9;letter-spacing:-.3px}
+.ff-logo-accent{color:#3b82f6}
+
+/* Nav links */
+.ff-nav-links{display:flex;align-items:center;gap:2px;flex:1}
+.ff-nav-link{display:flex;align-items:center;gap:5px;padding:6px 11px;border-radius:8px;color:rgba(148,163,184,.85);text-decoration:none;font-size:.82rem;font-weight:500;transition:all .18s;border:1px solid transparent;white-space:nowrap}
+.ff-nav-link:hover{color:#f1f5f9;background:rgba(255,255,255,.06);text-decoration:none}
+.ff-nav-link.active{color:#60a5fa;background:rgba(59,130,246,.11);border-color:rgba(59,130,246,.2)}
+
+/* Auth right */
+.ff-nav-auth{display:flex;align-items:center;gap:9px;margin-left:auto;flex-shrink:0}
+.ff-btn-ghost{background:transparent;border:1px solid rgba(148,163,184,.28);color:#94a3b8;padding:6px 15px;border-radius:8px;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .18s;font-family:inherit;text-decoration:none;display:inline-block}
+.ff-btn-ghost:hover{border-color:rgba(148,163,184,.55);color:#f1f5f9;text-decoration:none}
+.ff-btn-primary{background:linear-gradient(135deg,#2563eb,#0ea5e9);border:none;color:white;padding:7px 17px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .18s;font-family:inherit;box-shadow:0 2px 12px rgba(37,99,235,.3);text-decoration:none;display:inline-block}
+.ff-btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 18px rgba(37,99,235,.48);color:#fff;text-decoration:none}
+
+/* User menu */
+.ff-user-menu{position:relative}
+.ff-user-btn{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.22);border-radius:10px;padding:6px 12px 6px 8px;display:flex;align-items:center;gap:8px;cursor:pointer;font-family:inherit;transition:all .18s;color:#f1f5f9}
+.ff-user-btn:hover{background:rgba(59,130,246,.18);border-color:rgba(59,130,246,.4)}
+.ff-user-avatar{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#2563eb,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff;flex-shrink:0}
+.ff-user-name{font-size:.82rem;font-weight:600;color:#f1f5f9}
+.ff-user-chevron{font-size:.65rem;color:#64748b;transition:transform .2s}
+.ff-user-menu.open .ff-user-chevron{transform:rotate(180deg)}
+
+/* Dropdown */
+.ff-user-dropdown{display:none;position:absolute;top:calc(100% + 8px);right:0;background:#0d1829;border:1px solid rgba(59,130,246,.2);border-radius:14px;min-width:200px;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.6);z-index:1000}
+.ff-user-menu.open .ff-user-dropdown{display:block;animation:ddIn .2s ease}
+@keyframes ddIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.ff-dd-header{padding:14px 16px 10px;border-bottom:1px solid rgba(59,130,246,.1)}
+.ff-dd-name{font-weight:700;font-size:.88rem;color:#f1f5f9}
+.ff-dd-label{font-size:.68rem;color:#64748b;margin-top:1px}
+.ff-dd-divider{height:1px;background:rgba(59,130,246,.1);margin:4px 0}
+.ff-dd-item{display:flex;align-items:center;gap:8px;padding:10px 16px;color:#94a3b8;text-decoration:none;font-size:.82rem;transition:all .15s;cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+.ff-dd-item:hover{background:rgba(59,130,246,.08);color:#f1f5f9;text-decoration:none}
+.ff-dd-logout{color:#f87171}
+.ff-dd-logout:hover{background:rgba(239,68,68,.1);color:#fca5a5}
+
+/* Flash banner */
+.ff-flash{padding:11px 16px;border-radius:10px;font-size:.82rem;font-weight:500;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;transition:opacity .3s;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.ff-flash-success{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#86efac}
+.ff-flash-info{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);color:#93c5fd}
+.ff-flash-danger,.ff-flash-error{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
+.ff-flash-close{opacity:.5;font-size:.9rem;flex-shrink:0}
+
+/* Login popup */
+.popup-overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.65);backdrop-filter:blur(7px);display:none;align-items:center;justify-content:center}
+.popup-overlay.show{display:flex}
+.popup-box{background:linear-gradient(160deg,#0d1829,#0a1525);border:1px solid rgba(59,130,246,.26);border-radius:24px;padding:36px 32px;width:420px;max-width:95vw;position:relative;box-shadow:0 28px 70px rgba(0,0,0,.75);animation:popupIn .32s ease}
+@keyframes popupIn{from{opacity:0;transform:scale(.96) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.popup-close{position:absolute;top:14px;right:16px;background:none;border:none;color:#64748b;font-size:1.15rem;cursor:pointer;transition:color .15s}
+.popup-close:hover{color:#f1f5f9}
+.popup-icon-wrap{width:50px;height:50px;border-radius:13px;background:linear-gradient(135deg,rgba(59,130,246,.2),rgba(6,182,212,.14));border:1px solid rgba(59,130,246,.28);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:16px}
+.popup-title{font-size:1.1rem;font-weight:800;letter-spacing:-.3px;margin-bottom:8px;color:#f1f5f9;font-family:'Sora',sans-serif}
+.popup-sub{font-size:.82rem;color:#94a3b8;line-height:1.65;margin-bottom:20px}
+.popup-perks{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+.perk{display:flex;align-items:center;gap:9px;font-size:.79rem;color:#94a3b8}
+.perk-dot{width:6px;height:6px;border-radius:50%;background:#22c55e;flex-shrink:0}
+.popup-btns{display:flex;flex-direction:column;gap:9px}
+.popup-btn-primary{background:linear-gradient(135deg,#2563eb,#0ea5e9);border:none;color:#fff;padding:12px;border-radius:10px;font-weight:700;font-size:.88rem;cursor:pointer;font-family:'Sora',sans-serif;text-decoration:none;text-align:center;display:block;transition:opacity .15s}
+.popup-btn-primary:hover{opacity:.88;color:#fff;text-decoration:none}
+.popup-btn-outline{background:rgba(255,255,255,.05);border:1px solid rgba(59,130,246,.18);color:#f1f5f9;padding:11px;border-radius:10px;font-weight:600;font-size:.88rem;cursor:pointer;font-family:'Sora',sans-serif;text-decoration:none;text-align:center;display:block;transition:all .15s}
+.popup-btn-outline:hover{background:rgba(255,255,255,.09);color:#f1f5f9;text-decoration:none}
+.popup-btn-later{background:none;border:none;color:#64748b;font-size:.76rem;cursor:pointer;font-family:'Sora',sans-serif;text-align:center;transition:color .15s;padding:4px;width:100%}
+.popup-btn-later:hover{color:#94a3b8}
+
+@media(max-width:720px){.ff-nav-links{display:none}.ff-nav-inner{gap:16px}}
+</style>
+
+<script>
+/* User dropdown */
+function toggleUserMenu(){
+  document.getElementById('userMenu')?.classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  const m = document.getElementById('userMenu');
+  if(m && !m.contains(e.target)) m.classList.remove('open');
+});
+
+/* Popup */
+const FF_POPUP_KEY = 'ff_popup_last_shown';
+const FF_ONE_DAY   = 24 * 60 * 60 * 1000;
+
+function showLoginPopup(){
+  const m = document.getElementById('loginModal');
+  if(m) m.classList.add('show');
+}
+function closePopup(){
+  const m = document.getElementById('loginModal');
+  if(m) m.classList.remove('show');
+  localStorage.setItem(FF_POPUP_KEY, Date.now().toString());
+}
+
+document.getElementById('loginModal')?.addEventListener('click', function(e){
+  if(e.target === this) closePopup();
+});
+document.addEventListener('keydown', e => { if(e.key==='Escape') closePopup(); });
+
+/* Auto-show popup (only for logged-out users, only once per 24h) */
+{% if not session.get('user') %}
+window.addEventListener('load', () => {
+  const last = localStorage.getItem(FF_POPUP_KEY);
+  const now  = Date.now();
+  if(!last || (now - parseInt(last)) > FF_ONE_DAY){
+    setTimeout(() => {
+      document.getElementById('loginModal')?.classList.add('show');
+      localStorage.setItem(FF_POPUP_KEY, now.toString());
+    }, 6000);
+  }
+});
+{% endif %}
+</script>

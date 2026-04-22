@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Quant Intelligence — FinFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--bg:#060d1a;--bg-2:#0d1829;--bg-card:rgba(13,24,46,.75);--bg-hov:rgba(18,34,64,.9);--border:rgba(59,130,246,.13);--border-hov:rgba(59,130,246,.35);--blue:#3b82f6;--cyan:#06b6d4;--green:#22c55e;--green-bg:rgba(34,197,94,.12);--red:#ef4444;--red-bg:rgba(239,68,68,.12);--amber:#f59e0b;--amber-bg:rgba(245,158,11,.12);--purple:#a855f7;--purple-bg:rgba(168,85,247,.12);--text:#f1f5f9;--muted:#64748b;--soft:#94a3b8;--mono:'JetBrains Mono',monospace;--sans:'Sora','Segoe UI',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(59,130,246,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.022) 1px,transparent 1px);background-size:52px 52px}
+.z1{position:relative;z-index:1}
+.wrap{max-width:1200px;margin:0 auto;padding:28px 20px 80px}
+
+/* PAGE HEADER */
+.page-hdr{margin-bottom:32px}
+.page-hdr a{color:var(--blue);text-decoration:none;font-size:.75rem}
+.page-hdr a:hover{text-decoration:underline}
+.page-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.3);color:#c084fc;font-size:.67rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 12px;border-radius:30px;margin-bottom:10px}
+.page-title{font-size:1.7rem;font-weight:800;letter-spacing:-.5px;margin-bottom:4px}
+.page-sub{font-size:.82rem;color:var(--muted)}
+
+/* TOOL CARDS */
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-bottom:40px}
+.tool-card{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:22px 20px;text-decoration:none;color:var(--text);display:flex;flex-direction:column;gap:10px;transition:all .22s;position:relative;overflow:hidden}
+.tool-card::before{content:'';position:absolute;inset:0;border-radius:18px;opacity:0;transition:opacity .22s}
+.tool-card:hover{border-color:var(--border-hov);transform:translateY(-5px);box-shadow:0 14px 40px rgba(0,0,0,.45);color:var(--text);text-decoration:none}
+.tool-card:hover::before{opacity:1}
+.tc-blue::before  {background:radial-gradient(circle at top left,rgba(59,130,246,.12),transparent 65%)}
+.tc-green::before {background:radial-gradient(circle at top left,rgba(34,197,94,.1),transparent 65%)}
+.tc-amber::before {background:radial-gradient(circle at top left,rgba(245,158,11,.1),transparent 65%)}
+.tc-purple::before{background:radial-gradient(circle at top left,rgba(168,85,247,.1),transparent 65%)}
+.tc-cyan::before  {background:radial-gradient(circle at top left,rgba(6,182,212,.1),transparent 65%)}
+.tc-icon{font-size:1.8rem;line-height:1}
+.tc-name{font-size:.95rem;font-weight:700}
+.tc-desc{font-size:.73rem;color:var(--muted);line-height:1.55}
+.tc-arrow{font-size:.76rem;color:var(--blue);opacity:0;transform:translateX(-4px);transition:all .2s;margin-top:auto}
+.tool-card:hover .tc-arrow{opacity:1;transform:translateX(0)}
+
+/* PREMIUM LOCK OVERLAY */
+.lock-wrap{position:relative;overflow:hidden;border-radius:18px}
+.lock-overlay{position:absolute;inset:0;background:rgba(6,13,26,.82);backdrop-filter:blur(6px);z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:18px;gap:10px;border:1px solid rgba(168,85,247,.25);padding:20px;text-align:center}
+.lock-icon{font-size:2rem}
+.lock-title{font-size:.9rem;font-weight:800;color:#f1f5f9}
+.lock-sub{font-size:.74rem;color:var(--soft);line-height:1.5;max-width:200px}
+.lock-badge{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-size:.68rem;font-weight:700;padding:4px 14px;border-radius:30px;letter-spacing:.06em;text-transform:uppercase}
+.lock-soon{font-size:.67rem;color:var(--muted);margin-top:2px}
+
+/* QUICK RISK WIDGET */
+.quick-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:24px;margin-bottom:28px}
+.qw-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:6px}
+.qw-title::before{content:'';display:block;width:3px;height:12px;background:var(--purple);border-radius:2px}
+.qw-form{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.qw-input{flex:1;min-width:200px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:var(--sans);font-size:.88rem;outline:none;transition:border-color .2s}
+.qw-input::placeholder{color:var(--muted)}
+.qw-input:focus{border-color:var(--purple)}
+.qw-select{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:var(--sans);font-size:.88rem;outline:none;transition:border-color .2s;cursor:pointer}
+.qw-select option{background:var(--bg-2)}
+.qw-btn{background:linear-gradient(135deg,#7c3aed,var(--purple));border:none;color:#fff;padding:10px 20px;border-radius:10px;font-weight:700;font-size:.85rem;cursor:pointer;font-family:var(--sans);transition:opacity .15s;white-space:nowrap}
+.qw-btn:hover{opacity:.88}
+
+/* METRICS GRID */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.mcard{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.mcard-val{font-family:var(--mono);font-size:1.05rem;font-weight:800;margin-bottom:3px}
+.mcard-lbl{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.mcard-sub{font-size:.66rem;color:var(--muted);margin-top:3px}
+
+/* Charts */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+@media(max-width:640px){.chart-row{grid-template-columns:1fr}}
+.chart-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:16px}
+.chart-card-title{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px}
+
+/* AI Insight block */
+.insight-block{background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.2);border-radius:12px;padding:16px;margin-top:16px}
+.ib-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#c084fc;margin-bottom:12px}
+.ib-section{margin-bottom:12px;display:flex;align-items:flex-start;gap:8px}
+.ib-icon{font-size:1rem;flex-shrink:0;margin-top:1px}
+.ib-body{font-size:.8rem;color:var(--soft);line-height:1.6}
+.ib-body strong{color:#f1f5f9}
+.verdict-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:30px;font-size:.78rem;font-weight:700;margin-top:8px}
+.verdict-POSITIVE{background:var(--green-bg);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.verdict-NEGATIVE{background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.verdict-CAUTION{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
+.verdict-NEUTRAL{background:rgba(148,163,184,.1);color:var(--soft);border:1px solid rgba(148,163,184,.2)}
+
+/* Loading */
+.loader{display:none;text-align:center;padding:32px;color:var(--muted)}
+.spinner{width:32px;height:32px;border:3px solid rgba(168,85,247,.25);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.error-box{background:var(--red-bg);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px 16px;font-size:.82rem;color:#fca5a5;margin-top:12px;display:none}
+
+.fi{animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body><div class="z1">
+{% include 'navbar.html' %}
+<div class="wrap">
+
+  <div class="page-hdr fi">
+    <a href="/">← Home</a>
+    <div class="page-badge">⚡ Quant Intelligence</div>
+    <div class="page-title">Quantitative Analysis Hub</div>
+    <div class="page-sub">Advanced risk metrics, portfolio optimization, signals, forecasting and correlation analysis</div>
+  </div>
+
+  <!-- TOOL CARDS -->
+  <div class="tools-grid fi">
+    <a href="/quant/risk" class="tool-card tc-blue">
+      <div class="tc-icon">📐</div>
+      <div class="tc-name">Risk Metrics</div>
+      <div class="tc-desc">Sharpe, Beta, Volatility, Max Drawdown, VaR — full risk profile for any NSE stock.</div>
+      <div class="tc-arrow">→ Analyse risk</div>
+    </a>
+    <a href="/quant/optimizer" class="tool-card tc-green">
+      <div class="tc-icon">⚖️</div>
+      <div class="tc-name">Portfolio Optimizer</div>
+      <div class="tc-desc">Markowitz MPT — find optimal weights for max Sharpe or minimum variance across your stocks.</div>
+      <div class="tc-arrow">→ Optimize portfolio</div>
+    </a>
+    <a href="/quant/signals" class="tool-card tc-amber">
+      <div class="tc-icon">🎯</div>
+      <div class="tc-name">Signal Engine</div>
+      <div class="tc-desc">Rule-based BUY / HOLD / SELL signals using momentum, RSI, MA crossovers and Sharpe.</div>
+      <div class="tc-arrow">→ Get signals</div>
+    </a>
+    <a href="/quant/forecast" class="tool-card tc-cyan">
+      <div class="tc-icon">🔮</div>
+      <div class="tc-name">Price Forecast</div>
+      <div class="tc-desc">7–30 day price projections using moving averages, EMA and ARIMA time-series modelling.</div>
+      <div class="tc-arrow">→ View forecast</div>
+    </a>
+    <a href="/quant/correlation" class="tool-card tc-purple">
+      <div class="tc-icon">🔗</div>
+      <div class="tc-name">Correlation Matrix</div>
+      <div class="tc-desc">Visualise how your stocks move together — essential for building a diversified portfolio.</div>
+      <div class="tc-arrow">→ View correlation</div>
+    </a>
+
+    <!-- AI INSIGHTS — LOCKED -->
+    <div class="lock-wrap tool-card tc-purple" style="cursor:default;padding:0;border:none">
+      <div class="lock-overlay">
+        <div class="lock-icon">🤖</div>
+        <div class="lock-title">AI Insight Generator</div>
+        <div class="lock-sub">Human-readable AI commentary on your portfolio's risk, performance and outlook.</div>
+        <div class="lock-badge">Premium</div>
+        <div class="lock-soon">Coming Soon</div>
+      </div>
+      <!-- Ghost card behind overlay -->
+      <div style="padding:22px 20px;display:flex;flex-direction:column;gap:10px;opacity:0">
+        <div class="tc-icon">🤖</div><div class="tc-name">AI Insights</div>
+      </div>
+    </div>
+
+    <!-- CSV EXPORT — LOCKED -->
+    <div class="lock-wrap tool-card tc-blue" style="cursor:default;padding:0;border:none">
+      <div class="lock-overlay">
+        <div class="lock-icon">📥</div>
+        <div class="lock-title">Data Export</div>
+        <div class="lock-sub">Export all computed metrics, signals and forecasts to CSV or Excel.</div>
+        <div class="lock-badge">Premium</div>
+        <div class="lock-soon">Coming Soon</div>
+      </div>
+      <div style="padding:22px 20px;display:flex;flex-direction:column;gap:10px;opacity:0">
+        <div class="tc-icon">📥</div><div class="tc-name">Export</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUICK RISK CHECK -->
+  <div class="quick-wrap fi">
+    <div class="qw-title">Quick Risk Check</div>
+    <div class="qw-form">
+      <input class="qw-input" id="quickTicker" placeholder="Ticker — e.g. RELIANCE.NS" style="max-width:260px">
+      <select class="qw-select" id="quickPeriod">
+        <option value="6mo">6 Months</option>
+        <option value="1y" selected>1 Year</option>
+        <option value="2y">2 Years</option>
+      </select>
+      <button class="qw-btn" onclick="runQuickRisk()">⚡ Analyse</button>
+    </div>
+
+    <div class="loader" id="quickLoader">
+      <div class="spinner"></div>
+      <div>Fetching market data and computing metrics…</div>
+    </div>
+    <div class="error-box" id="quickError"></div>
+
+    <div id="quickResults" style="display:none">
+      <div class="metrics-grid" id="metricsGrid"></div>
+      <div class="chart-row">
+        <div class="chart-card">
+          <div class="chart-card-title">Price History</div>
+          <div style="height:160px"><canvas id="priceChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-title">Drawdown</div>
+          <div style="height:160px"><canvas id="ddChart"></canvas></div>
+        </div>
+      </div>
+      <div class="insight-block" id="insightBlock" style="display:none">
+        <div class="ib-title">🤖 AI Risk Commentary</div>
+        <div id="insightContent"></div>
+      </div>
+    </div>
+  </div>
+
+</div></div>
+
+<script>
+let priceChartObj, ddChartObj;
+
+async function runQuickRisk(){
+  const ticker = document.getElementById('quickTicker').value.trim().toUpperCase();
+  const period = document.getElementById('quickPeriod').value;
+  if(!ticker){ alert('Enter a ticker symbol.'); return; }
+
+  document.getElementById('quickLoader').style.display  = 'block';
+  document.getElementById('quickResults').style.display = 'none';
+  document.getElementById('quickError').style.display   = 'none';
+
+  try{
+    const [riskRes, insightRes] = await Promise.all([
+      fetch(`/api/quant/risk/${ticker}?period=${period}`).then(r=>r.json()),
+      fetch(`/api/quant/insights/risk/${ticker}?period=${period}`).then(r=>r.json()),
+    ]);
+
+    if(!riskRes.ok){ throw new Error(riskRes.error || 'Failed to fetch risk data'); }
+
+    // Metrics grid
+    const d = riskRes;
+    const metrics = [
+      {val: d.annualized_return,    lbl: 'Ann. Return',   unit:'%', color: d.annualized_return>=0?'var(--green)':'var(--red)'},
+      {val: d.annualized_volatility,lbl: 'Volatility',    unit:'%', color: d.annualized_volatility<25?'var(--green)':d.annualized_volatility<40?'var(--amber)':'var(--red)'},
+      {val: d.sharpe_ratio,         lbl: 'Sharpe Ratio',  unit:'',  color: d.sharpe_ratio>=1?'var(--green)':d.sharpe_ratio>=0?'var(--amber)':'var(--red)'},
+      {val: d.sortino_ratio,        lbl: 'Sortino Ratio', unit:'',  color: d.sortino_ratio>=1?'var(--green)':'var(--amber)'},
+      {val: d.beta,                 lbl: 'Beta vs NIFTY', unit:'',  color: 'var(--cyan)'},
+      {val: d.max_drawdown,         lbl: 'Max Drawdown',  unit:'%', color: d.max_drawdown>-15?'var(--green)':d.max_drawdown>-30?'var(--amber)':'var(--red)'},
+      {val: d.var_95,               lbl: 'VaR 95%',       unit:'%', color: 'var(--soft)'},
+      {val: d.data_points,          lbl: 'Data Points',   unit:'',  color: 'var(--blue)'},
+    ];
+
+    document.getElementById('metricsGrid').innerHTML = metrics.map(m=>`
+      <div class="mcard">
+        <div class="mcard-val" style="color:${m.color}">${m.val!==null?m.val+m.unit:'N/A'}</div>
+        <div class="mcard-lbl">${m.lbl}</div>
+      </div>`).join('');
+
+    // Price chart
+    if(priceChartObj) priceChartObj.destroy();
+    priceChartObj = new Chart(document.getElementById('priceChart'),{
+      type:'line',
+      data:{labels:d.price_dates,datasets:[{data:d.price_values,borderColor:'#3b82f6',borderWidth:1.8,pointRadius:0,fill:true,tension:.3,backgroundColor:'rgba(59,130,246,.07)'}]},
+      options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:5,color:'#64748b',font:{size:9}},grid:{color:'rgba(59,130,246,.04)'}},y:{position:'right',ticks:{color:'#64748b',font:{size:9},callback:v=>'₹'+v},grid:{color:'rgba(59,130,246,.04)'}}}}
+    });
+
+    // Drawdown chart
+    if(ddChartObj) ddChartObj.destroy();
+    ddChartObj = new Chart(document.getElementById('ddChart'),{
+      type:'line',
+      data:{labels:d.dd_dates,datasets:[{data:d.dd_values,borderColor:'#ef4444',borderWidth:1.5,pointRadius:0,fill:true,tension:.3,backgroundColor:'rgba(239,68,68,.08)'}]},
+      options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:5,color:'#64748b',font:{size:9}},grid:{color:'rgba(59,130,246,.04)'}},y:{position:'right',ticks:{color:'#64748b',font:{size:9},callback:v=>v+'%'},grid:{color:'rgba(59,130,246,.04)'}}}}
+    });
+
+    // AI Insights
+    if(insightRes.ok){
+      const ins = insightRes;
+      let html = '';
+      ins.sections.forEach(s=>{
+        html += `<div class="ib-section"><div class="ib-icon">${s.icon}</div><div class="ib-body"><strong>${s.title}:</strong> ${s.body}</div></div>`;
+      });
+      html += `<div class="verdict-pill verdict-${ins.verdict}">${ins.verdict} — ${ins.verdict_text}</div>`;
+      document.getElementById('insightContent').innerHTML = html;
+      document.getElementById('insightBlock').style.display = 'block';
+    }
+
+    document.getElementById('quickResults').style.display = 'block';
+
+  }catch(e){
+    document.getElementById('quickError').textContent = '⚠️ ' + e.message;
+    document.getElementById('quickError').style.display = 'block';
+  } finally {
+    document.getElementById('quickLoader').style.display = 'none';
+  }
+}
+
+document.getElementById('quickTicker').addEventListener('keydown', e=>{
+  if(e.key==='Enter') runQuickRisk();
+});
+</script>
+</body></html>

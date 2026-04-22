@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ data.name }} — FinFlow</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root{
+  --bg:#060d1a;--bg-2:#0d1829;--bg-card:rgba(13,24,46,.75);--bg-hov:rgba(18,34,64,.95);
+  --border:rgba(59,130,246,.13);--border-hov:rgba(59,130,246,.32);
+  --blue:#3b82f6;--cyan:#06b6d4;--green:#22c55e;--green-bg:rgba(34,197,94,.12);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.12);--amber:#f59e0b;--amber-bg:rgba(245,158,11,.12);
+  --text:#f1f5f9;--muted:#64748b;--soft:#94a3b8;
+  --r-sm:8px;--r-md:14px;--r-lg:20px;
+  --mono:'JetBrains Mono',monospace;--sans:'Sora','Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(59,130,246,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.02) 1px,transparent 1px);
+  background-size:52px 52px}
+.z1{position:relative;z-index:1}
+.wrap{max-width:1280px;margin:0 auto;padding:28px 20px 60px}
+
+/* STOCK HEADER */
+.stock-hero{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-lg);padding:24px 28px;margin-bottom:20px;backdrop-filter:blur(14px);display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.sh-left{}
+.sh-breadcrumb{font-size:.68rem;color:var(--muted);margin-bottom:8px}
+.sh-breadcrumb a{color:var(--blue);text-decoration:none}
+.sh-breadcrumb a:hover{text-decoration:underline}
+.sh-ticker{font-size:.72rem;font-weight:700;color:var(--blue);font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.sh-name{font-size:1.5rem;font-weight:700;letter-spacing:-.4px;margin-bottom:10px}
+.sh-meta{display:flex;flex-wrap:wrap;gap:8px}
+.meta-pill{font-size:.68rem;color:var(--soft);background:rgba(255,255,255,.05);border:1px solid var(--border);padding:3px 10px;border-radius:30px}
+.sh-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.sh-price{font-family:var(--mono);font-size:2rem;font-weight:700;letter-spacing:-1px;line-height:1}
+.sh-change{display:inline-flex;align-items:center;gap:5px;font-size:.88rem;font-weight:600;font-family:var(--mono);padding:4px 12px;border-radius:7px}
+.sh-change.up{color:var(--green);background:var(--green-bg)}.sh-change.down{color:var(--red);background:var(--red-bg)}
+.sh-actions{display:flex;gap:8px;align-items:center}
+.btn-wl{background:none;border:1px solid var(--border);color:var(--soft);padding:7px 16px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .18s}
+.btn-wl:hover,.btn-wl.active{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.btn-add{background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;color:#fff;padding:7px 16px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:var(--sans);transition:opacity .15s}
+.btn-add:hover{opacity:.88}
+
+/* QUICK STATS ROW */
+.qstats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:20px}
+.qs-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px}
+.qs-label{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
+.qs-value{font-family:var(--mono);font-size:.95rem;font-weight:700;color:var(--text)}
+.qs-value.green{color:var(--green)}.qs-value.red{color:var(--red)}
+
+/* 52W RANGE BAR */
+.range-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-md);padding:18px 20px;margin-bottom:20px}
+.range-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px}
+.range-bar-wrap{position:relative;height:6px;background:rgba(255,255,255,.07);border-radius:3px;margin:14px 0 8px}
+.range-fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,var(--red),var(--amber),var(--green));border-radius:3px}
+.range-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:13px;height:13px;background:var(--blue);border:2px solid #fff;border-radius:50%;box-shadow:0 0 8px rgba(59,130,246,.6)}
+.range-labels{display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);font-family:var(--mono)}
+.range-low{color:var(--red)}.range-high{color:var(--green)}
+
+/* TABS */
+.detail-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px;overflow-x:auto}
+.dtab{padding:11px 20px;font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all .18s;white-space:nowrap;font-family:var(--sans)}
+.dtab:hover{color:var(--soft)}
+.dtab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.dtab-content{display:none}.dtab-content.active{display:block}
+
+/* CHART SECTION */
+.chart-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-bottom:18px}
+.chart-card-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.period-btns{display:flex;gap:5px}
+.pbtn{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.pbtn:hover{border-color:var(--border-hov);color:var(--soft)}
+.pbtn.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.chart-container{position:relative}
+
+/* KEY METRICS GRID */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+.metric-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-md);padding:16px}
+.metric-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+.metric-val{font-family:var(--mono);font-size:1.05rem;font-weight:700;color:var(--text)}
+.metric-desc{font-size:.68rem;color:var(--muted);margin-top:3px}
+
+/* FINANCIALS SECTION */
+.fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+@media(max-width:600px){.fin-grid{grid-template-columns:1fr}}
+.fin-chart-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-md);padding:18px}
+.fin-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:14px}
+.no-data{text-align:center;padding:32px;color:var(--muted);font-size:.82rem}
+
+/* ABOUT SECTION */
+.about-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-md);padding:20px;margin-bottom:16px}
+.about-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px}
+.about-text{font-size:.83rem;color:var(--soft);line-height:1.7}
+
+/* HOLDINGS PLACEHOLDER */
+.holdings-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-md);padding:24px;text-align:center;color:var(--muted)}
+.holdings-icon{font-size:2.5rem;margin-bottom:12px}
+.holdings-msg{font-size:.85rem;line-height:1.6}
+
+/* PERFORMANCE TABLE */
+.perf-table{width:100%;border-collapse:separate;border-spacing:0 8px}
+.perf-table th{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:0 12px 4px;text-align:left}
+.perf-table td{padding:12px;font-size:.83rem;background:var(--bg-card);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.perf-table td:first-child{border-left:1px solid var(--border);border-radius:var(--r-sm) 0 0 var(--r-sm);font-weight:600}
+.perf-table td:last-child{border-right:1px solid var(--border);border-radius:0 var(--r-sm) var(--r-sm) 0;font-family:var(--mono);font-weight:600}
+.perf-bar{height:4px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:4px;overflow:hidden}
+.perf-bar-fill{height:100%;border-radius:2px;background:var(--blue);max-width:100%}
+
+/* ADD MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;width:340px;max-width:95vw;position:relative}
+.modal-close{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer}
+.modal-close:hover{color:var(--text)}
+.modal-title{font-size:1rem;font-weight:700;margin-bottom:4px}
+.modal-sub{font-size:.75rem;color:var(--muted);margin-bottom:18px}
+.modal-input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--sans);font-size:.85rem;outline:none;margin-bottom:10px;transition:border-color .2s}
+.modal-input:focus{border-color:var(--blue)}
+.modal-input::placeholder{color:var(--muted)}
+.modal-submit{width:100%;background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;color:#fff;padding:10px;border-radius:9px;font-weight:700;font-size:.85rem;cursor:pointer;font-family:var(--sans);margin-top:4px}
+.modal-submit:hover{opacity:.88}
+
+.fi{animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="z1">
+{% include 'navbar.html' %}
+
+<div class="wrap">
+
+  <!-- BREADCRUMB + HERO -->
+  <div class="stock-hero fi">
+    <div class="sh-left">
+      <div class="sh-breadcrumb">
+        <a href="/market">Market</a> › <a href="/market">Stocks</a> › {{ ticker }}
+      </div>
+      <div class="sh-ticker">{{ ticker.replace('.NS','') }} · NSE</div>
+      <div class="sh-name">{{ data.name }}</div>
+      <div class="sh-meta">
+        {% if data.sector != 'N/A' %}<span class="meta-pill">{{ data.sector }}</span>{% endif %}
+        {% if data.industry != 'N/A' %}<span class="meta-pill">{{ data.industry }}</span>{% endif %}
+        <span class="meta-pill">Market Cap: {{ data.market_cap }}</span>
+      </div>
+    </div>
+    <div class="sh-right">
+      <div class="sh-price">₹{{ "{:,.2f}".format(data.price) }}</div>
+      {% set day_chg = data.price - data.prev_close %}
+      {% set day_pct = (day_chg / data.prev_close * 100) if data.prev_close else 0 %}
+      <span class="sh-change {{ 'up' if day_chg >= 0 else 'down' }}">
+        {{ '▲' if day_chg >= 0 else '▼' }}
+        {{ "{:+.2f}".format(day_chg) }} ({{ "{:+.2f}".format(day_pct) }}%)
+      </span>
+      <div class="sh-actions">
+        <button class="btn-wl" id="wlBtn" onclick="toggleWatchlist()">☆ Watchlist</button>
+        <button class="btn-add" onclick="openModal()">+ Portfolio</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUICK STATS -->
+  <div class="qstats fi">
+    <div class="qs-card"><div class="qs-label">Open</div><div class="qs-value">₹{{ "{:,.2f}".format(data.open) }}</div></div>
+    <div class="qs-card"><div class="qs-label">Prev Close</div><div class="qs-value">₹{{ "{:,.2f}".format(data.prev_close) }}</div></div>
+    <div class="qs-card"><div class="qs-label">Day High</div><div class="qs-value green">₹{{ "{:,.2f}".format(data.day_high) }}</div></div>
+    <div class="qs-card"><div class="qs-label">Day Low</div><div class="qs-value red">₹{{ "{:,.2f}".format(data.day_low) }}</div></div>
+    <div class="qs-card"><div class="qs-label">Volume</div><div class="qs-value">{{ "{:,}".format(data.volume) if data.volume != 'N/A' else 'N/A' }}</div></div>
+    <div class="qs-card"><div class="qs-label">Avg Volume</div><div class="qs-value">{{ "{:,}".format(data.avg_volume) if data.avg_volume != 'N/A' else 'N/A' }}</div></div>
+    <div class="qs-card"><div class="qs-label">P/E Ratio</div><div class="qs-value">{{ data.pe_ratio }}</div></div>
+    <div class="qs-card"><div class="qs-label">Beta</div><div class="qs-value">{{ data.beta }}</div></div>
+  </div>
+
+  <!-- 52W RANGE BAR -->
+  {% if data.high_52 != 'N/A' and data.low_52 != 'N/A' and data.high_52 > 0 and data.low_52 > 0 %}
+  {% set range_pct = ((data.price - data.low_52) / (data.high_52 - data.low_52) * 100) if (data.high_52 - data.low_52) > 0 else 50 %}
+  <div class="range-card fi">
+    <div class="range-title">52-Week Range</div>
+    <div class="range-bar-wrap">
+      <div class="range-fill" style="width:100%"></div>
+      <div class="range-thumb" style="left:{{ range_pct }}%"></div>
+    </div>
+    <div class="range-labels">
+      <span class="range-low">₹{{ data.low_52 }} (52W Low)</span>
+      <span style="color:var(--blue);font-family:var(--mono);font-size:.72rem;font-weight:700">
+        Current: ₹{{ "{:,.2f}".format(data.price) }} ({{ "{:.1f}".format(range_pct) }}%)
+      </span>
+      <span class="range-high">₹{{ data.high_52 }} (52W High)</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- DETAIL TABS -->
+  <div class="detail-tabs fi">
+    <button class="dtab active" onclick="switchTab('overview',this)">📊 Overview</button>
+    <button class="dtab" onclick="switchTab('financials',this)">📋 Financials</button>
+    <button class="dtab" onclick="switchTab('performance',this)">📈 Performance</button>
+    <button class="dtab" onclick="switchTab('about',this)">ℹ️ About</button>
+  </div>
+
+  <!-- ══════ TAB: OVERVIEW ══════ -->
+  <div class="dtab-content active" id="tab-overview">
+
+    <!-- Price Chart -->
+    <div class="chart-card fi">
+      <div class="chart-card-title">
+        <span>Price Chart</span>
+        <div class="period-btns">
+          <button class="pbtn {{ 'active' if period=='1mo' }}" onclick="changePeriod('1mo')">1M</button>
+          <button class="pbtn {{ 'active' if period=='3mo' }}" onclick="changePeriod('3mo')">3M</button>
+          <button class="pbtn {{ 'active' if period=='6mo' }}" onclick="changePeriod('6mo')">6M</button>
+          <button class="pbtn {{ 'active' if period=='1y' or not period }}" onclick="changePeriod('1y')">1Y</button>
+          <button class="pbtn {{ 'active' if period=='2y' }}" onclick="changePeriod('2y')">2Y</button>
+        </div>
+      </div>
+      <div class="chart-container" style="height:320px">
+        <canvas id="priceChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Volume Chart -->
+    <div class="chart-card fi">
+      <div class="chart-card-title"><span>Volume</span></div>
+      <div class="chart-container" style="height:120px">
+        <canvas id="volChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px">Key Metrics</div>
+    <div class="metrics-grid fi">
+      <div class="metric-card"><div class="metric-label">P/E Ratio</div><div class="metric-val">{{ data.pe_ratio }}</div><div class="metric-desc">Price-to-Earnings</div></div>
+      <div class="metric-card"><div class="metric-label">P/B Ratio</div><div class="metric-val">{{ data.pb_ratio }}</div><div class="metric-desc">Price-to-Book</div></div>
+      <div class="metric-card"><div class="metric-label">EPS</div><div class="metric-val">₹{{ data.eps }}</div><div class="metric-desc">Earnings per Share</div></div>
+      <div class="metric-card"><div class="metric-label">ROE</div><div class="metric-val">{{ data.roe }}%</div><div class="metric-desc">Return on Equity</div></div>
+      <div class="metric-card"><div class="metric-label">Debt/Equity</div><div class="metric-val">{{ data.debt_equity }}</div><div class="metric-desc">Leverage ratio</div></div>
+      <div class="metric-card"><div class="metric-label">Div Yield</div><div class="metric-val">{{ data.div_yield }}%</div><div class="metric-desc">Annual dividend</div></div>
+      <div class="metric-card"><div class="metric-label">Book Value</div><div class="metric-val">₹{{ data.book_value }}</div><div class="metric-desc">Per share</div></div>
+      <div class="metric-card"><div class="metric-label">Market Cap</div><div class="metric-val">{{ data.market_cap }}</div><div class="metric-desc">Total valuation</div></div>
+    </div>
+
+  </div><!-- /tab-overview -->
+
+  <!-- ══════ TAB: FINANCIALS ══════ -->
+  <div class="dtab-content" id="tab-financials">
+    {% if financials and financials.years %}
+    <div class="fin-grid">
+      <div class="fin-chart-card">
+        <div class="fin-title">Revenue (₹ Cr)</div>
+        <div style="height:200px"><canvas id="revChart"></canvas></div>
+      </div>
+      <div class="fin-chart-card">
+        <div class="fin-title">Net Income (₹ Cr)</div>
+        <div style="height:200px"><canvas id="niChart"></canvas></div>
+      </div>
+      <div class="fin-chart-card">
+        <div class="fin-title">EBITDA (₹ Cr)</div>
+        <div style="height:200px"><canvas id="ebitdaChart"></canvas></div>
+      </div>
+      <div class="fin-chart-card">
+        <div class="fin-title">Operating Cash Flow (₹ Cr)</div>
+        <div style="height:200px"><canvas id="ocfChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Debt / Equity chart -->
+    <div class="fin-chart-card" style="margin-bottom:16px">
+      <div class="fin-title">Debt vs Equity (₹ Cr)</div>
+      <div style="height:200px"><canvas id="deChart"></canvas></div>
+    </div>
+
+    {% else %}
+    <div class="no-data">
+      <div style="font-size:2rem;margin-bottom:8px">📋</div>
+      <div>Financial data is not available for this ticker.</div>
+      <div style="font-size:.75rem;margin-top:4px;color:var(--muted)">This may occur for indices or some international listings.</div>
+    </div>
+    {% endif %}
+  </div><!-- /tab-financials -->
+
+  <!-- ══════ TAB: PERFORMANCE ══════ -->
+  <div class="dtab-content" id="tab-performance">
+    <div class="chart-card" style="margin-bottom:18px">
+      <div class="chart-card-title"><span>Price Performance — Multi-Period</span></div>
+      <table class="perf-table">
+        <thead><tr><th>Period</th><th>Start Price</th><th>End Price</th><th>Return</th></tr></thead>
+        <tbody id="perfBody">
+          <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Loading performance data…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-title"><span>Volatility (Beta)</span></div>
+      <div style="padding:8px 0">
+        <div style="font-size:.8rem;color:var(--soft);margin-bottom:8px">
+          Beta vs NIFTY 50: <strong style="color:var(--text);font-family:var(--mono)">{{ data.beta }}</strong>
+        </div>
+        {% if data.beta != 'N/A' %}
+        {% set beta_val = data.beta | float %}
+        <div style="height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:{{ [beta_val * 50, 100] | min }}%;background:{% if beta_val > 1.5 %}var(--red){% elif beta_val > 1 %}var(--amber){% else %}var(--green){% endif %};border-radius:3px;transition:width .6s ease"></div>
+        </div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:6px">
+          {% if beta_val > 1.5 %}High volatility — moves more than the market
+          {% elif beta_val > 1 %}Moderate volatility — slightly above market
+          {% elif beta_val > 0 %}Low volatility — less than market movement
+          {% else %}Inverse or non-correlated with market{% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div><!-- /tab-performance -->
+
+  <!-- ══════ TAB: ABOUT ══════ -->
+  <div class="dtab-content" id="tab-about">
+    {% if data.description %}
+    <div class="about-card fi">
+      <div class="about-title">About the Company</div>
+      <div class="about-text">{{ data.description }}</div>
+    </div>
+    {% endif %}
+
+    <div class="metrics-grid fi">
+      <div class="metric-card"><div class="metric-label">Sector</div><div class="metric-val" style="font-size:.88rem">{{ data.sector }}</div></div>
+      <div class="metric-card"><div class="metric-label">Industry</div><div class="metric-val" style="font-size:.82rem">{{ data.industry }}</div></div>
+      <div class="metric-card"><div class="metric-label">Ticker (NSE)</div><div class="metric-val" style="font-family:var(--mono)">{{ ticker }}</div></div>
+      <div class="metric-card"><div class="metric-label">Market Cap</div><div class="metric-val">{{ data.market_cap }}</div></div>
+    </div>
+  </div><!-- /tab-about -->
+
+</div><!-- /wrap -->
+
+<!-- ADD TO PORTFOLIO MODAL -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">Add {{ ticker.replace('.NS','') }} to Portfolio</div>
+    <div class="modal-sub">{{ data.name }}</div>
+    <input type="number" class="modal-input" id="mBuyPrice" placeholder="Buy Price (₹)" value="{{ data.price }}">
+    <input type="number" class="modal-input" id="mQty" placeholder="Quantity">
+    <button class="modal-submit" onclick="confirmAdd()">Add to Portfolio</button>
+  </div>
+</div>
+
+</div><!-- /z1 -->
+
+<script>
+const TICKER = "{{ ticker }}";
+const PRICE  = {{ data.price }};
+
+/* ── Tab switching ── */
+function switchTab(name, btn){
+  document.querySelectorAll('.dtab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.dtab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='financials') buildFinCharts();
+  if(name==='performance') buildPerfTable();
+}
+
+/* ── Period change ── */
+function changePeriod(p){ window.location.href=`/stock/${TICKER}?period=${p}`; }
+
+/* ── Price chart ── */
+const labels  = {{ data.chart_labels | tojson }};
+const prices  = {{ data.chart_data   | tojson }};
+const volumes = {{ data.chart_volume | tojson }};
+
+const priceUp = prices.length > 1 && prices[prices.length-1] >= prices[0];
+const lineColor = priceUp ? '#22c55e' : '#ef4444';
+
+const priceChart = new Chart(document.getElementById('priceChart'), {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [{
+      label: 'Price',
+      data: prices,
+      borderColor: lineColor,
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: true,
+      tension: 0.35,
+      backgroundColor: (ctx) => {
+        const canvas = ctx.chart.canvas;
+        const gradient = canvas.getContext('2d').createLinearGradient(0,0,0,canvas.offsetHeight);
+        gradient.addColorStop(0, priceUp ? 'rgba(34,197,94,0.18)' : 'rgba(239,68,68,0.18)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        return gradient;
+      }
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'rgba(13,24,46,.95)',
+        borderColor: 'rgba(59,130,246,.3)',
+        borderWidth: 1,
+        titleColor: '#94a3b8',
+        bodyColor: '#f1f5f9',
+        bodyFont: { family: "'JetBrains Mono',monospace", weight: '600' },
+        callbacks: {
+          label: ctx => '  ₹' + Number(ctx.raw).toLocaleString('en-IN',{minimumFractionDigits:2})
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: 'rgba(59,130,246,.04)' },
+        ticks: {
+          color: '#64748b', font: { size: 10 },
+          maxTicksLimit: 8,
+          maxRotation: 0
+        }
+      },
+      y: {
+        position: 'right',
+        grid: { color: 'rgba(59,130,246,.05)' },
+        ticks: {
+          color: '#64748b', font: { family: "'JetBrains Mono',monospace", size: 10 },
+          callback: v => '₹' + Number(v).toLocaleString('en-IN')
+        }
+      }
+    }
+  }
+});
+
+/* ── Volume chart ── */
+if(volumes.length){
+  new Chart(document.getElementById('volChart'),{
+    type:'bar',
+    data:{
+      labels:labels,
+      datasets:[{
+        data:volumes,
+        backgroundColor: volumes.map((v,i)=> i>0 && prices[i]>=prices[i-1] ? 'rgba(34,197,94,.5)' : 'rgba(239,68,68,.5)'),
+        borderRadius:2,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'  '+Number(ctx.raw).toLocaleString('en-IN')}}},
+      scales:{
+        x:{display:false},
+        y:{position:'right',grid:{color:'rgba(59,130,246,.04)'},ticks:{color:'#64748b',font:{size:9},callback:v=>{if(v>=1e7)return(v/1e7).toFixed(1)+'Cr';if(v>=1e5)return(v/1e5).toFixed(1)+'L';return v}}}
+      }
+    }
+  });
+}
+
+/* ── Financials Charts (lazy, built on tab click) ── */
+let finChartsBuilt = false;
+function buildFinCharts(){
+  if(finChartsBuilt) return;
+  finChartsBuilt = true;
+
+  const fin = {{ financials | tojson if financials else '{}' }};
+  if(!fin || !fin.years || !fin.years.length) return;
+
+  const years = fin.years.slice().reverse();
+  const rev   = (fin.revenue    || []).slice().reverse();
+  const ni    = (fin.net_income || []).slice().reverse();
+  const eb    = (fin.ebitda     || []).slice().reverse();
+  const ocf   = (fin.op_cf      || []).slice().reverse();
+  const debt  = (fin.total_debt || []).slice().reverse();
+  const eq    = (fin.equity     || []).slice().reverse();
+
+  const barOpts = (color, label) => ({
+    type:'bar',
+    data:{labels:years,datasets:[{label,data:color.data,backgroundColor:color.bg,borderRadius:5}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'₹'+ctx.raw+' Cr'}}},
+      scales:{
+        x:{grid:{color:'rgba(59,130,246,.04)'},ticks:{color:'#64748b',font:{size:11}}},
+        y:{grid:{color:'rgba(59,130,246,.05)'},ticks:{color:'#64748b',font:{family:"'JetBrains Mono',monospace",size:10},callback:v=>v+'Cr'}}
+      }
+    }
+  });
+
+  if(rev.length)  new Chart(document.getElementById('revChart'),   barOpts({data:rev, bg:'rgba(59,130,246,.7)'},'Revenue'));
+  if(ni.length)   new Chart(document.getElementById('niChart'),    barOpts({data:ni,  bg: ni.map(v=>v>=0?'rgba(34,197,94,.7)':'rgba(239,68,68,.7)')},'Net Income'));
+  if(eb.length)   new Chart(document.getElementById('ebitdaChart'),barOpts({data:eb,  bg:'rgba(6,182,212,.7)'},'EBITDA'));
+  if(ocf.length)  new Chart(document.getElementById('ocfChart'),   barOpts({data:ocf, bg:'rgba(245,158,11,.7)'},'Op CF'));
+
+  // Debt vs Equity grouped
+  if((debt.length || eq.length)){
+    new Chart(document.getElementById('deChart'),{
+      type:'bar',
+      data:{labels:years,datasets:[
+        {label:'Total Debt',data:debt,backgroundColor:'rgba(239,68,68,.65)',borderRadius:4},
+        {label:'Equity',    data:eq,  backgroundColor:'rgba(34,197,94,.65)',borderRadius:4}
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},
+        scales:{
+          x:{grid:{color:'rgba(59,130,246,.04)'},ticks:{color:'#64748b',font:{size:11}}},
+          y:{grid:{color:'rgba(59,130,246,.05)'},ticks:{color:'#64748b',font:{size:10},callback:v=>v+'Cr'}}
+        }
+      }
+    });
+  }
+}
+
+/* ── Performance Table ── */
+let perfBuilt = false;
+async function buildPerfTable(){
+  if(perfBuilt) return;
+  perfBuilt = true;
+
+  const periods = [
+    {label:'1 Week',  period:'5d'},
+    {label:'1 Month', period:'1mo'},
+    {label:'3 Months',period:'3mo'},
+    {label:'6 Months',period:'6mo'},
+    {label:'1 Year',  period:'1y'},
+    {label:'2 Years', period:'2y'},
+  ];
+
+  const tbody = document.getElementById('perfBody');
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px">Fetching…</td></tr>';
+
+  const rows = await Promise.all(periods.map(async p => {
+    try{
+      const r = await fetch(`/stock-data/${TICKER}?period=${p.period}`);
+      // Instead of a full API call, compute from existing data where possible
+      // We use the stock-data API
+      const d = await r.json();
+      if(!d.chart_data || d.chart_data.length < 2) return null;
+      const start = d.chart_data[0];
+      const end   = d.chart_data[d.chart_data.length-1];
+      const ret   = ((end - start) / start * 100);
+      return { label:p.label, start, end, ret };
+    }catch(e){ return null; }
+  }));
+
+  tbody.innerHTML = rows.filter(Boolean).map(r => {
+    const pos = r.ret >= 0;
+    const pct = Math.min(Math.abs(r.ret), 100);
+    return `<tr>
+      <td>${r.label}</td>
+      <td style="font-family:var(--mono);color:var(--soft)">₹${Number(r.start).toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+      <td style="font-family:var(--mono);color:var(--soft)">₹${Number(r.end).toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+      <td>
+        <span style="font-family:var(--mono);font-weight:700;color:${pos?'var(--green)':'var(--red)'}">${pos?'▲':'▼'} ${Math.abs(r.ret).toFixed(2)}%</span>
+        <div class="perf-bar"><div class="perf-bar-fill" style="width:${pct}%;background:${pos?'var(--green)':'var(--red)'}"></div></div>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px">No data available</td></tr>';
+}
+
+/* ── Watchlist ── */
+function getWL(){ return JSON.parse(localStorage.getItem('ff_watchlist')||'[]'); }
+function saveWL(l){ localStorage.setItem('ff_watchlist',JSON.stringify(l)); }
+const wlBtn = document.getElementById('wlBtn');
+function updateWLBtn(){
+  if(getWL().includes(TICKER)){
+    wlBtn.textContent='★ Watchlisted';
+    wlBtn.classList.add('active');
+  } else {
+    wlBtn.textContent='☆ Watchlist';
+    wlBtn.classList.remove('active');
+  }
+}
+function toggleWatchlist(){
+  let l=getWL();
+  if(l.includes(TICKER)) l=l.filter(t=>t!==TICKER);
+  else l.push(TICKER);
+  saveWL(l); updateWLBtn();
+}
+updateWLBtn();
+
+/* ── Portfolio Modal ── */
+function openModal(){ document.getElementById('addModal').classList.add('open'); }
+function closeModal(){ document.getElementById('addModal').classList.remove('open'); }
+document.getElementById('addModal').addEventListener('click',e=>{ if(e.target===document.getElementById('addModal')) closeModal(); });
+function confirmAdd(){
+  const bp  = parseFloat(document.getElementById('mBuyPrice').value);
+  const qty = parseInt(document.getElementById('mQty').value);
+  if(!bp||!qty||qty<=0){ alert('Enter valid buy price and quantity.'); return; }
+  let p = JSON.parse(localStorage.getItem('ff_portfolio')||'[]');
+  const ex = p.findIndex(x=>x.ticker===TICKER);
+  if(ex>=0) p[ex].qty+=qty;
+  else p.push({ticker:TICKER,buyPrice:bp,qty,addedAt:Date.now()});
+  localStorage.setItem('ff_portfolio',JSON.stringify(p));
+  closeModal();
+  const toast = document.createElement('div');
+  Object.assign(toast.style,{position:'fixed',bottom:'28px',right:'24px',background:'var(--blue)',color:'#fff',padding:'10px 20px',borderRadius:'10px',fontSize:'.83rem',fontWeight:'600',zIndex:'9999',boxShadow:'0 4px 20px rgba(59,130,246,.4)'});
+  toast.textContent = TICKER.replace('.NS','')+' added to portfolio ✓';
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(),2500);
+}
+</script>
+</body>
+</html>

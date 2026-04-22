@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financial Analysis — FinFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg:        #060d1a;
+  --bg-2:      #0d1829;
+  --bg-card:   rgba(13,24,46,.75);
+  --bg-hov:    rgba(18,34,64,.9);
+  --border:    rgba(59,130,246,.13);
+  --border-hov:rgba(59,130,246,.35);
+  --blue:      #3b82f6;
+  --cyan:      #06b6d4;
+  --green:     #22c55e;
+  --green-bg:  rgba(34,197,94,.12);
+  --red:       #ef4444;
+  --red-bg:    rgba(239,68,68,.12);
+  --amber:     #f59e0b;
+  --amber-bg:  rgba(245,158,11,.12);
+  --purple:    #a855f7;
+  --purple-bg: rgba(168,85,247,.12);
+  --text:      #f1f5f9;
+  --muted:     #64748b;
+  --soft:      #94a3b8;
+  --mono:      'JetBrains Mono', monospace;
+  --sans:      'Sora', 'Segoe UI', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(59,130,246,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,.025) 1px, transparent 1px);
+  background-size: 52px 52px;
+}
+.z1 { position: relative; z-index: 1; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 40px 20px 80px; }
+
+/* ── HERO ── */
+.fin-hero { text-align: center; padding: 48px 20px 40px; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.25);
+  color: var(--blue); font-size: .7rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 30px; margin-bottom: 18px;
+}
+.hero-title {
+  font-size: 2.6rem; font-weight: 800; letter-spacing: -.8px;
+  line-height: 1.15; margin-bottom: 12px;
+}
+.hero-title .accent {
+  background: linear-gradient(135deg, var(--blue), var(--cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub {
+  font-size: .95rem; color: var(--soft);
+  max-width: 540px; margin: 0 auto 36px; line-height: 1.6;
+}
+
+/* ── ANALYSIS BOX ── */
+.analysis-box {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 28px;
+  max-width: 640px; margin: 0 auto 48px;
+  backdrop-filter: blur(14px);
+}
+.ab-title {
+  font-size: .72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .09em; color: var(--muted); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 6px;
+}
+.ab-title::before {
+  content: ''; display: block;
+  width: 3px; height: 12px;
+  background: var(--blue); border-radius: 2px;
+}
+.ab-input-row { display: flex; gap: 10px; margin-bottom: 14px; }
+.ab-input {
+  flex: 1;
+  background: rgba(255,255,255,.05); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 15px;
+  color: var(--text); font-family: var(--sans); font-size: .9rem;
+  outline: none; transition: border-color .2s, box-shadow .2s;
+}
+.ab-input::placeholder { color: var(--muted); }
+.ab-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
+.ab-search-btn {
+  background: linear-gradient(135deg, var(--blue), var(--cyan));
+  border: none; color: #fff; padding: 12px 20px;
+  border-radius: 10px; font-weight: 700; font-size: .85rem;
+  cursor: pointer; font-family: var(--sans); white-space: nowrap;
+  transition: opacity .15s;
+}
+.ab-search-btn:hover { opacity: .88; }
+
+/* Ticker preview card */
+.ticker-preview {
+  display: none;
+  background: rgba(59,130,246,.07); border: 1px solid rgba(59,130,246,.22);
+  border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;
+  animation: fadeUp .3s ease both;
+}
+.tp-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.tp-name { font-weight: 700; font-size: .92rem; }
+.tp-meta { font-size: .7rem; color: var(--muted); margin-top: 2px; }
+.tp-stats { display: flex; gap: 18px; }
+.tp-stat { text-align: right; }
+.tp-stat-val { font-family: var(--mono); font-size: .88rem; font-weight: 700; }
+.tp-stat-lbl { font-size: .62rem; color: var(--muted); }
+
+/* Mode buttons */
+.ab-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mode-btn {
+  background: rgba(255,255,255,.03); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px;
+  cursor: pointer; transition: all .2s;
+  text-align: left; display: flex; align-items: center; gap: 12px;
+  color: var(--text); text-decoration: none;
+}
+.mode-btn:hover { border-color: var(--border-hov); background: var(--bg-hov); color: var(--text); }
+.mode-icon { font-size: 1.4rem; flex-shrink: 0; line-height: 1; }
+.mode-label { font-size: .83rem; font-weight: 700; display: block; margin-bottom: 2px; }
+.mode-desc  { font-size: .68rem; color: var(--muted); }
+
+/* Loading spinner */
+.spin {
+  display: none; width: 18px; height: 18px;
+  border: 2px solid rgba(59,130,246,.25); border-top-color: var(--blue);
+  border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0;
+  align-self: center;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── STATS STRIP ── */
+.stats-strip {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 12px; margin-bottom: 40px;
+}
+.ss-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px; text-align: center;
+}
+.ss-val {
+  font-family: var(--mono); font-size: 1.45rem; font-weight: 700;
+  color: var(--blue); margin-bottom: 4px;
+}
+.ss-lbl { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+
+/* ── TOOLS GRID ── */
+.section-label { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; }
+.section-sub   { font-size: .8rem; color: var(--muted); margin-bottom: 22px; }
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px; margin-bottom: 48px;
+}
+.tool-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 18px; padding: 24px 20px;
+  cursor: pointer; text-decoration: none;
+  transition: all .22s; display: flex; flex-direction: column; gap: 11px;
+  position: relative; overflow: hidden; color: var(--text);
+}
+.tool-card::before {
+  content: ''; position: absolute; inset: 0; border-radius: 18px;
+  opacity: 0; transition: opacity .22s;
+}
+.tool-card:hover {
+  border-color: var(--border-hov);
+  transform: translateY(-5px);
+  box-shadow: 0 14px 36px rgba(0,0,0,.45);
+  color: var(--text); text-decoration: none;
+}
+.tool-card:hover::before { opacity: 1; }
+
+/* per-card accent glows */
+.tc-blue::before   { background: radial-gradient(circle at top left, rgba(59,130,246,.1),  transparent 65%); }
+.tc-green::before  { background: radial-gradient(circle at top left, rgba(34,197,94,.1),   transparent 65%); }
+.tc-amber::before  { background: radial-gradient(circle at top left, rgba(245,158,11,.1),  transparent 65%); }
+.tc-red::before    { background: radial-gradient(circle at top left, rgba(239,68,68,.1),   transparent 65%); }
+.tc-purple::before { background: radial-gradient(circle at top left, rgba(168,85,247,.1),  transparent 65%); }
+.tc-cyan::before   { background: radial-gradient(circle at top left, rgba(6,182,212,.1),   transparent 65%); }
+
+.tc-icon  { font-size: 1.9rem; line-height: 1; }
+.tc-name  { font-size: .92rem; font-weight: 700; }
+.tc-desc  { font-size: .73rem; color: var(--muted); line-height: 1.55; }
+.tc-arrow {
+  font-size: .8rem; color: var(--blue); margin-top: auto;
+  opacity: 0; transform: translateX(-4px); transition: all .2s;
+}
+.tool-card:hover .tc-arrow { opacity: 1; transform: translateX(0); }
+
+/* accent border-bottom on hover */
+.tc-blue:hover   { border-color: rgba(59,130,246,.5); }
+.tc-green:hover  { border-color: rgba(34,197,94,.5);  }
+.tc-amber:hover  { border-color: rgba(245,158,11,.5); }
+.tc-red:hover    { border-color: rgba(239,68,68,.5);  }
+.tc-purple:hover { border-color: rgba(168,85,247,.5); }
+.tc-cyan:hover   { border-color: rgba(6,182,212,.5);  }
+
+/* ── ANIMATIONS ── */
+.fi { animation: fadeUp .55s ease both; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fi:nth-child(2) { animation-delay: .06s; }
+.fi:nth-child(3) { animation-delay: .12s; }
+.fi:nth-child(4) { animation-delay: .18s; }
+
+@media (max-width: 700px) {
+  .hero-title    { font-size: 1.75rem; }
+  .ab-modes      { grid-template-columns: 1fr; }
+  .stats-strip   { grid-template-columns: 1fr 1fr; }
+  .tools-grid    { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 420px) {
+  .tools-grid    { grid-template-columns: 1fr; }
+  .stats-strip   { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+
+<body>
+<div class="z1">
+
+  {% include 'navbar.html' %}
+
+  <div class="wrap">
+
+    <!-- ── HERO ── -->
+    <div class="fin-hero fi">
+      <div class="hero-badge">📊 FinFlow Analytics</div>
+      <h1 class="hero-title">
+        Professional <span class="accent">Financial Analysis</span><br>
+        for Indian Equities
+      </h1>
+      <p class="hero-sub">
+        DCF valuation, balance sheet analysis, ratio screening, research reports
+        and side-by-side stock comparison — all powered by live yFinance data.
+      </p>
+    </div>
+
+    <!-- ── START ANALYSIS BOX ── -->
+    <div class="analysis-box fi">
+      <div class="ab-title">Start Analysis</div>
+
+      <!-- Ticker preview (shown after JS fetch) -->
+      <div class="ticker-preview" id="tickerPreview">
+        <div class="tp-row">
+          <div>
+            <div class="tp-name" id="prevName">—</div>
+            <div class="tp-meta" id="prevMeta">—</div>
+          </div>
+          <div class="tp-stats">
+            <div class="tp-stat">
+              <div class="tp-stat-val" id="prevPrice">—</div>
+              <div class="tp-stat-lbl">Price</div>
+            </div>
+            <div class="tp-stat">
+              <div class="tp-stat-val" id="prevPE">—</div>
+              <div class="tp-stat-lbl">P/E</div>
+            </div>
+            <div class="tp-stat">
+              <div class="tp-stat-val" id="prevROE">—</div>
+              <div class="tp-stat-lbl">ROE %</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ab-input-row">
+        <input
+          type="text"
+          class="ab-input"
+          id="mainTicker"
+          placeholder="Enter ticker — e.g. RELIANCE.NS, TCS.NS, HDFCBANK.NS"
+          oninput="previewTicker()"
+        >
+        <div class="spin" id="prevSpin"></div>
+      </div>
+
+      <div class="ab-modes">
+        <div class="mode-btn" onclick="goQuick()">
+          <div class="mode-icon">⚡</div>
+          <div>
+            <span class="mode-label">Quick Analysis</span>
+            <span class="mode-desc">Ratios, scores &amp; risk flags</span>
+          </div>
+        </div>
+        <div class="mode-btn" onclick="goReport()">
+          <div class="mode-icon">📑</div>
+          <div>
+            <span class="mode-label">Full Research Report</span>
+            <span class="mode-desc">Complete equity deep-dive with verdict</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STATS STRIP ── -->
+    <div class="stats-strip fi">
+      <div class="ss-card"><div class="ss-val">6</div><div class="ss-lbl">Analysis Tools</div></div>
+      <div class="ss-card"><div class="ss-val">DCF</div><div class="ss-lbl">Valuation Model</div></div>
+      <div class="ss-card"><div class="ss-val">10+</div><div class="ss-lbl">Key Metrics</div></div>
+      <div class="ss-card"><div class="ss-val">Live</div><div class="ss-lbl">yFinance Data</div></div>
+    </div>
+
+    <!-- ── TOOLS GRID ── -->
+    <div class="section-label">📦 Analysis Tools</div>
+    <div class="section-sub">Select any tool below to start your analysis independently</div>
+
+    <div class="tools-grid fi">
+
+      <a href="/input" class="tool-card tc-blue">
+        <div class="tc-icon">📊</div>
+        <div class="tc-name">DCF Valuation</div>
+        <div class="tc-desc">Calculate intrinsic value using discounted cash flow with custom growth, discount and terminal rate assumptions.</div>
+        <div class="tc-arrow">→ Open tool</div>
+      </a>
+
+      <a href="/balance-sheet" class="tool-card tc-green">
+        <div class="tc-icon">🧾</div>
+        <div class="tc-name">Balance Sheet</div>
+        <div class="tc-desc">Analyse assets, liabilities, equity, liquidity ratios and 4-year balance sheet trends.</div>
+        <div class="tc-arrow">→ Open tool</div>
+      </a>
+
+      <a href="/profit_statement" class="tool-card tc-amber">
+        <div class="tc-icon">📈</div>
+        <div class="tc-name">Profit &amp; Income</div>
+        <div class="tc-desc">Revenue trends, net margins, EBITDA, operating income and multi-year profitability scoring.</div>
+        <div class="tc-arrow">→ Open tool</div>
+      </a>
+
+      <a href="/ratio_analysis" class="tool-card tc-red">
+        <div class="tc-icon">📉</div>
+        <div class="tc-name">Ratio Analysis</div>
+        <div class="tc-desc">Full ratio screening: liquidity, leverage, efficiency and valuation with a scored radar chart.</div>
+        <div class="tc-arrow">→ Open tool</div>
+      </a>
+
+      <a href="/research-report" class="tool-card tc-purple">
+        <div class="tc-icon">📑</div>
+        <div class="tc-name">Research Report</div>
+        <div class="tc-desc">Automated 9-section equity report: DCF + ratios + WACC + risk analysis + final investment verdict.</div>
+        <div class="tc-arrow">→ Open tool</div>
+      </a>
+
+      <a href="/compare" class="tool-card tc-cyan">
+        <div class="tc-icon">⚖️</div>
+        <div class="tc-name">Compare Stocks</div>
+        <div class="tc-desc">Side-by-side fundamental comparison of any two NSE stocks with score radars and charts.</div>
+        <div class="tc-arrow">→ Open tool</div>
+      </a>
+
+    </div>
+
+  </div><!-- /wrap -->
+</div><!-- /z1 -->
+
+<script>
+let previewTimer;
+
+function previewTicker() {
+  clearTimeout(previewTimer);
+  const t = document.getElementById('mainTicker').value.trim().toUpperCase();
+
+  if (!t || t.length < 3) {
+    document.getElementById('tickerPreview').style.display = 'none';
+    return;
+  }
+
+  previewTimer = setTimeout(async () => {
+    const spin = document.getElementById('prevSpin');
+    spin.style.display = 'block';
+    try {
+      const r = await fetch('/api/financial-preview/' + t);
+      const d = await r.json();
+      if (d.ok) {
+        document.getElementById('prevName').textContent  = d.name;
+        document.getElementById('prevMeta').textContent  = d.ticker + ' · ' + (d.sector || 'N/A');
+        document.getElementById('prevPrice').textContent = '₹' + Number(d.price).toLocaleString('en-IN');
+        document.getElementById('prevPE').textContent    = d.pe || '—';
+        document.getElementById('prevROE').textContent   = (d.roe || '—') + '%';
+        document.getElementById('tickerPreview').style.display = 'block';
+      } else {
+        document.getElementById('tickerPreview').style.display = 'none';
+      }
+    } catch(e) {
+      document.getElementById('tickerPreview').style.display = 'none';
+    }
+    spin.style.display = 'none';
+  }, 600);
+}
+
+function getTicker() {
+  return document.getElementById('mainTicker').value.trim().toUpperCase();
+}
+
+function goQuick() {
+  const t = getTicker();
+  if (!t) { alert('Please enter a ticker symbol first — e.g. RELIANCE.NS'); return; }
+  // Pre-fill the ratio analysis form and submit
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/ratio_analysis';
+  const inp = document.createElement('input');
+  inp.type = 'hidden'; inp.name = 'ticker'; inp.value = t;
+  form.appendChild(inp);
+  document.body.appendChild(form);
+  form.submit();
+}
+
+function goReport() {
+  const t = getTicker();
+  if (!t) { alert('Please enter a ticker symbol first — e.g. RELIANCE.NS'); return; }
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/research-report';
+  const inp = document.createElement('input');
+  inp.type = 'hidden'; inp.name = 'ticker'; inp.value = t;
+  form.appendChild(inp);
+  document.body.appendChild(form);
+  form.submit();
+}
+
+document.getElementById('mainTicker').addEventListener('keydown', e => {
+  if (e.key === 'Enter') goReport();
+});
+</script>
+
+</body>
+</html>

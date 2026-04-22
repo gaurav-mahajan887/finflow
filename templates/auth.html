@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% if mode=='signup' %}Create Account{% else %}Login{% endif %} — FinFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#060d1a;--bg-card:rgba(13,24,46,.85);--border:rgba(59,130,246,.18);--blue:#3b82f6;--cyan:#06b6d4;--green:#22c55e;--red:#ef4444;--text:#f1f5f9;--muted:#64748b;--soft:#94a3b8;--sans:'Sora','Segoe UI',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(59,130,246,.1),transparent 55%),radial-gradient(ellipse 60% 50% at 80% 90%,rgba(6,182,212,.07),transparent 55%)}
+
+/* Back link */
+.back-link{position:fixed;top:20px;left:24px;color:var(--blue);text-decoration:none;font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:5px;transition:gap .18s}
+.back-link:hover{gap:8px;color:var(--cyan)}
+
+/* Logo */
+.auth-logo{display:flex;align-items:center;gap:9px;margin-bottom:28px;text-decoration:none}
+.auth-logo-icon{width:38px;height:38px;background:rgba(59,130,246,.14);border:1px solid rgba(59,130,246,.3);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.auth-logo-text{font-size:1.2rem;font-weight:700;color:var(--text)}
+.auth-logo-text span{color:var(--blue)}
+
+/* Card */
+.auth-card{background:var(--bg-card);border:1px solid var(--border);border-radius:22px;padding:36px 32px;width:420px;max-width:100%;backdrop-filter:blur(16px);position:relative;z-index:1}
+.auth-title{font-size:1.4rem;font-weight:800;letter-spacing:-.4px;margin-bottom:4px}
+.auth-sub{font-size:.8rem;color:var(--muted);margin-bottom:26px}
+
+/* Tabs */
+.auth-tabs{display:flex;gap:0;margin-bottom:24px;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.auth-tab{flex:1;padding:10px;text-align:center;font-size:.83rem;font-weight:600;cursor:pointer;border:none;background:none;color:var(--muted);transition:all .18s;font-family:var(--sans);text-decoration:none;display:block}
+.auth-tab.active,.auth-tab:hover{background:rgba(59,130,246,.12);color:#60a5fa}
+.auth-tab.active{color:#60a5fa}
+
+/* Flash */
+.flash-msg{padding:10px 14px;border-radius:9px;font-size:.8rem;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.flash-error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:#fca5a5}
+.flash-success{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);color:#86efac}
+
+/* Fields */
+.field{margin-bottom:15px}
+.field label{display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);margin-bottom:6px}
+.field input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(59,130,246,.18);border-radius:9px;padding:11px 14px;color:var(--text);font-family:var(--sans);font-size:.88rem;outline:none;transition:border-color .2s,box-shadow .2s}
+.field input::placeholder{color:var(--muted)}
+.field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+
+/* Submit */
+.submit-btn{width:100%;background:linear-gradient(135deg,#2563eb,var(--cyan));border:none;color:#fff;padding:13px;border-radius:10px;font-weight:700;font-size:.92rem;cursor:pointer;font-family:var(--sans);margin-top:6px;transition:opacity .15s;letter-spacing:.01em}
+.submit-btn:hover{opacity:.88}
+
+/* Divider */
+.divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--muted);font-size:.75rem}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* Footer */
+.auth-footer{text-align:center;margin-top:18px;font-size:.78rem;color:var(--muted)}
+.auth-footer a{color:var(--blue);text-decoration:none;font-weight:600}
+.auth-footer a:hover{color:var(--cyan)}
+
+/* Terms */
+.terms-note{font-size:.7rem;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<a href="/" class="back-link">← Back to FinFlow</a>
+
+<a class="auth-logo" href="/">
+  <span class="auth-logo-icon">
+    <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
+      <polyline points="2,16 7,10 11,13 16,6 20,8" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="20" cy="8" r="2" fill="#06b6d4"/>
+    </svg>
+  </span>
+  <span class="auth-logo-text">Fin<span>Flow</span></span>
+</a>
+
+<div class="auth-card">
+  <!-- Tabs -->
+  <div class="auth-tabs">
+    <a href="/login"  class="auth-tab {% if mode=='login' %}active{% endif %}">Login</a>
+    <a href="/signup" class="auth-tab {% if mode=='signup' %}active{% endif %}">Create Account</a>
+  </div>
+
+  <div class="auth-title">{% if mode=='signup' %}Create your account{% else %}Welcome back{% endif %}</div>
+  <div class="auth-sub">{% if mode=='signup' %}Join FinFlow — free forever{% else %}Sign in to your FinFlow account{% endif %}</div>
+
+  {% if error %}
+  <div class="flash-msg flash-error">⚠️ {{ error }}</div>
+  {% endif %}
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+  <div class="flash-msg flash-{{ 'error' if cat=='danger' else cat }}">
+    {{ '✅' if cat=='success' else 'ℹ️' }} {{ msg }}
+  </div>
+  {% endfor %}
+  {% endwith %}
+
+  {% if mode == 'signup' %}
+  <!-- SIGNUP FORM -->
+  <form method="POST" action="/signup">
+    <div class="field">
+      <label>Username</label>
+      <input type="text" name="username" placeholder="e.g. investor_raj" required autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Min. 6 characters" required autocomplete="new-password">
+    </div>
+    <button type="submit" class="submit-btn">🚀 Create Free Account</button>
+    <div class="terms-note">By signing up you agree to use this platform for educational purposes only. This is not financial advice.</div>
+  </form>
+
+  {% else %}
+  <!-- LOGIN FORM -->
+  <form method="POST" action="/login">
+    <div class="field">
+      <label>Username or Email</label>
+      <input type="text" name="identifier" placeholder="Username or email" required autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Your password" required autocomplete="current-password">
+    </div>
+    <button type="submit" class="submit-btn">Login →</button>
+  </form>
+  {% endif %}
+
+  <div class="auth-footer">
+    {% if mode == 'signup' %}
+    Already have an account? <a href="/login">Login</a>
+    {% else %}
+    Don't have an account? <a href="/signup">Sign up free</a>
+    {% endif %}
+  </div>
+</div>
+
+</body>
+</html>

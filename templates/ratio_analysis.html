@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Ratio Analysis — FinFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--bg:#060d1a;--bg-2:#0d1829;--bg-card:rgba(13,24,46,.75);--border:rgba(59,130,246,.13);--border-hov:rgba(59,130,246,.35);--blue:#3b82f6;--cyan:#06b6d4;--green:#22c55e;--green-bg:rgba(34,197,94,.12);--red:#ef4444;--red-bg:rgba(239,68,68,.12);--amber:#f59e0b;--amber-bg:rgba(245,158,11,.12);--text:#f1f5f9;--muted:#64748b;--soft:#94a3b8;--mono:'JetBrains Mono',monospace;--sans:'Sora','Segoe UI',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(59,130,246,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.025) 1px,transparent 1px);background-size:52px 52px}
+.z1{position:relative;z-index:1}
+.wrap{max-width:1100px;margin:0 auto;padding:32px 20px 70px}
+.page-hdr{margin-bottom:28px}.page-hdr a{color:var(--blue);text-decoration:none;font-size:.75rem}
+.page-title{font-size:1.5rem;font-weight:700;letter-spacing:-.4px;margin-top:6px}
+.page-sub{font-size:.78rem;color:var(--muted);margin-top:3px}
+.layout{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start}
+@media(max-width:800px){.layout{grid-template-columns:1fr}}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:22px;backdrop-filter:blur(12px);margin-bottom:16px}
+.card-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:6px}
+.card-title::before{content:'';display:block;width:3px;height:12px;background:var(--red);border-radius:2px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:.7rem;font-weight:600;color:var(--soft);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.field input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-family:var(--sans);font-size:.87rem;outline:none;transition:border-color .2s}
+.field input::placeholder{color:var(--muted)}
+.field input:focus{border-color:var(--red)}
+.submit-btn{width:100%;background:linear-gradient(135deg,var(--red),#b91c1c);border:none;color:#fff;padding:12px;border-radius:10px;font-weight:700;font-size:.9rem;cursor:pointer;font-family:var(--sans);margin-top:6px}
+.submit-btn:hover{opacity:.88}
+.divider{height:1px;background:var(--border);margin:14px 0}
+/* SCORE CARDS */
+.score-hero{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:18px}
+.sh-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 12px;text-align:center;position:relative;overflow:hidden}
+.sh-card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 14px 14px}
+.sh-card.blue::before{background:var(--blue)}.sh-card.green::before{background:var(--green)}.sh-card.amber::before{background:var(--amber)}.sh-card.red::before{background:var(--red)}
+.sh-num{font-family:var(--mono);font-size:1.6rem;font-weight:800;line-height:1;margin-bottom:3px}
+.sh-denom{font-size:.65rem;color:var(--muted)}/10</div>
+.sh-lbl{font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+.sh-bar{height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.sh-fill{height:100%;border-radius:2px}
+/* RATIOS TABLE */
+.ratio-group{margin-bottom:20px}
+.rg-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.ratio-item{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(59,130,246,.05)}
+.ratio-item:last-child{border-bottom:none}
+.ri-left{display:flex;flex-direction:column;gap:2px}
+.ri-name{font-size:.8rem;font-weight:600}
+.ri-desc{font-size:.67rem;color:var(--muted)}
+.ri-right{display:flex;align-items:center;gap:8px}
+.ri-val{font-family:var(--mono);font-size:.9rem;font-weight:700}
+.ri-badge{font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:5px}
+.ri-badge.good{background:var(--green-bg);color:var(--green)}
+.ri-badge.ok{background:var(--amber-bg);color:var(--amber)}
+.ri-badge.bad{background:var(--red-bg);color:var(--red)}
+.ri-badge.neutral{background:rgba(148,163,184,.12);color:var(--soft)}
+/* INSIGHTS */
+.insight{display:flex;align-items:flex-start;gap:9px;padding:10px 13px;border-radius:9px;font-size:.79rem;margin-bottom:8px;line-height:1.5}
+.insight.ok{background:var(--green-bg);border:1px solid rgba(34,197,94,.15)}
+.insight.warn{background:var(--amber-bg);border:1px solid rgba(245,158,11,.15)}
+.insight.bad{background:var(--red-bg);border:1px solid rgba(239,68,68,.15)}
+/* FLAGS */
+.flag{display:flex;align-items:flex-start;gap:8px;padding:9px 12px;border-radius:8px;font-size:.78rem;margin-bottom:7px}
+.flag.ok{background:var(--green-bg);color:var(--green)}.flag.warn{background:var(--amber-bg);color:var(--amber)}.flag.danger{background:var(--red-bg);color:var(--red)}
+.fi{animation:fadeUp .5s ease both}@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body><div class="z1">
+{% include 'navbar.html' %}
+<div class="wrap">
+  <div class="page-hdr fi">
+    <a href="/financials">← Financial Analysis</a>
+    <div class="page-title">📉 Ratio Analysis & Screening</div>
+    <div class="page-sub">Liquidity, leverage, profitability and valuation ratios</div>
+  </div>
+
+  <div class="layout">
+    <!-- FORM -->
+    <div>
+      <div class="card fi">
+        <div class="card-title">Data Source</div>
+        <form method="POST">
+          <div class="field">
+            <label>Stock Ticker (full analysis)</label>
+            <input type="text" name="ticker" value="{{ ticker }}" placeholder="e.g. SBIN.NS">
+          </div>
+          <div class="divider"></div>
+          <div style="font-size:.7rem;color:var(--muted);margin-bottom:10px">Or enter manually</div>
+          <div class="field"><label>Current Assets (₹)</label><input type="number" name="current_assets" step="any"></div>
+          <div class="field"><label>Current Liabilities (₹)</label><input type="number" name="current_liabilities" step="any"></div>
+          <div class="field"><label>Total Liabilities (₹)</label><input type="number" name="liabilities" step="any"></div>
+          <div class="field"><label>Equity (₹)</label><input type="number" name="equity" step="any"></div>
+          <div class="field"><label>Revenue (₹)</label><input type="number" name="revenue" step="any"></div>
+          <div class="field"><label>Net Income (₹)</label><input type="number" name="net_income" step="any"></div>
+          <button type="submit" class="submit-btn">Run Ratio Analysis →</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div>
+      {% if error %}<div class="card fi" style="border-color:rgba(239,68,68,.3)"><div style="color:var(--red);font-size:.85rem">⚠️ {{ error }}</div></div>{% endif %}
+
+      {% if result %}
+      <!-- SCORE CARDS (only when ticker used) -->
+      {% if result.health is defined %}
+      <div class="score-hero fi">
+        {% set sc = [('Overall','overall','blue'),('Health','health','green'),('Profit','profit','amber'),('Risk','risk','red'),('Value','valuation','blue')] %}
+        {% for lbl,key,color in sc %}
+        {% set v = result[key] %}
+        <div class="sh-card {{ color }}">
+          <div class="sh-lbl">{{ lbl }}</div>
+          <div class="sh-num" style="color:{{ 'var(--green)' if v>=7 else 'var(--amber)' if v>=5 else 'var(--red)' }}">{{ v }}</div>
+          <div style="font-size:.6rem;color:var(--muted);margin-bottom:6px">/10</div>
+          <div class="sh-bar"><div class="sh-fill" style="width:{{ v*10 }}%;background:{{ 'var(--green)' if v>=7 else 'var(--amber)' if v>=5 else 'var(--red)' }}"></div></div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- RATIO TABLE -->
+      <div class="card fi">
+        <div class="card-title">Ratios Breakdown</div>
+
+        <div class="ratio-group">
+          <div class="rg-title">Liquidity</div>
+          {% if result.current_ratio is not none %}
+          <div class="ratio-item">
+            <div class="ri-left"><div class="ri-name">Current Ratio</div><div class="ri-desc">Current assets ÷ Current liabilities</div></div>
+            <div class="ri-right">
+              <div class="ri-val">{{ result.current_ratio }}</div>
+              <div class="ri-badge {{ 'good' if (result.current_ratio or 0)>=2 else 'ok' if (result.current_ratio or 0)>=1.2 else 'bad' }}">{{ 'Strong' if (result.current_ratio or 0)>=2 else 'Adequate' if (result.current_ratio or 0)>=1.2 else 'Weak' }}</div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="ratio-group">
+          <div class="rg-title">Leverage</div>
+          {% if result.de_ratio is not none %}
+          <div class="ratio-item">
+            <div class="ri-left"><div class="ri-name">Debt / Equity</div><div class="ri-desc">Total debt ÷ Shareholders' equity</div></div>
+            <div class="ri-right">
+              <div class="ri-val">{{ result.de_ratio }}</div>
+              <div class="ri-badge {{ 'good' if (result.de_ratio or 0)<0.5 else 'ok' if (result.de_ratio or 0)<1.5 else 'bad' }}">{{ 'Low' if (result.de_ratio or 0)<0.5 else 'Moderate' if (result.de_ratio or 0)<1.5 else 'High' }}</div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="ratio-group">
+          <div class="rg-title">Profitability</div>
+          {% if result.net_margin is not none %}
+          <div class="ratio-item">
+            <div class="ri-left"><div class="ri-name">Net Margin</div><div class="ri-desc">Net income ÷ Revenue</div></div>
+            <div class="ri-right">
+              <div class="ri-val">{{ result.net_margin }}%</div>
+              <div class="ri-badge {{ 'good' if (result.net_margin or 0)>=20 else 'ok' if (result.net_margin or 0)>=10 else 'bad' }}">{{ 'High' if (result.net_margin or 0)>=20 else 'Moderate' if (result.net_margin or 0)>=10 else 'Low' }}</div>
+            </div>
+          </div>
+          {% endif %}
+          {% if result.roe is not none and result.roe != 'N/A' %}
+          <div class="ratio-item">
+            <div class="ri-left"><div class="ri-name">ROE</div><div class="ri-desc">Return on equity</div></div>
+            <div class="ri-right">
+              <div class="ri-val">{{ result.roe }}%</div>
+              <div class="ri-badge {{ 'good' if (result.roe or 0)>=20 else 'ok' if (result.roe or 0)>=12 else 'bad' }}">{{ 'Strong' if (result.roe or 0)>=20 else 'Decent' if (result.roe or 0)>=12 else 'Weak' }}</div>
+            </div>
+          </div>
+          {% endif %}
+          {% if result.roa is not none and result.roa != 'N/A' %}
+          <div class="ratio-item">
+            <div class="ri-left"><div class="ri-name">ROA</div><div class="ri-desc">Return on assets</div></div>
+            <div class="ri-right"><div class="ri-val">{{ result.roa }}%</div><div class="ri-badge neutral">—</div></div>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="ratio-group">
+          <div class="rg-title">Valuation</div>
+          {% if result.pe is not none %}
+          <div class="ratio-item">
+            <div class="ri-left"><div class="ri-name">P/E Ratio</div><div class="ri-desc">Price ÷ Earnings per share</div></div>
+            <div class="ri-right">
+              <div class="ri-val">{{ result.pe }}</div>
+              <div class="ri-badge {{ 'good' if (result.pe or 0)<15 else 'ok' if (result.pe or 0)<30 else 'bad' }}">{{ 'Cheap' if (result.pe or 0)<15 else 'Fair' if (result.pe or 0)<30 else 'Pricey' }}</div>
+            </div>
+          </div>
+          {% endif %}
+          {% if result.pb is not none %}
+          <div class="ratio-item">
+            <div class="ri-left"><div class="ri-name">P/B Ratio</div><div class="ri-desc">Price ÷ Book value per share</div></div>
+            <div class="ri-right"><div class="ri-val">{{ result.pb }}</div><div class="ri-badge neutral">{{ 'Low' if (result.pb or 0)<2 else 'High' if (result.pb or 0)>5 else 'Fair' }}</div></div>
+          </div>
+          {% endif %}
+          {% if result.eps is not none %}
+          <div class="ratio-item">
+            <div class="ri-left"><div class="ri-name">EPS</div><div class="ri-desc">Earnings per share</div></div>
+            <div class="ri-right"><div class="ri-val">₹{{ result.eps }}</div></div>
+          </div>
+          {% endif %}
+          {% if result.div_yield is not none %}
+          <div class="ratio-item">
+            <div class="ri-left"><div class="ri-name">Dividend Yield</div><div class="ri-desc">Annual dividend ÷ Price</div></div>
+            <div class="ri-right"><div class="ri-val">{{ result.div_yield }}%</div><div class="ri-badge {{ 'good' if (result.div_yield or 0)>2 else 'neutral' }}">{{ 'Good' if (result.div_yield or 0)>2 else 'Low' }}</div></div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- INSIGHTS -->
+      {% if result.insights is defined %}
+      <div class="card fi">
+        <div class="card-title">Auto Insights</div>
+        {% for ins in result.insights %}
+        <div class="insight {{ 'ok' if ins.icon=='✅' else 'warn' if ins.icon=='🟡' else 'bad' }}">
+          <span>{{ ins.icon }}</span><span>{{ ins.text }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- FLAGS -->
+      {% if result.flags is defined %}
+      <div class="fi">
+        {% for f in result.flags %}
+        <div class="flag {{ f.type }}">{{ '✅' if f.type=='ok' else '⚠️' if f.type=='warn' else '🚨' }} {{ f.msg }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Radar Chart -->
+      {% if result.health is defined %}
+      <div class="card fi">
+        <div class="card-title">Score Radar</div>
+        <div style="height:220px"><canvas id="radarChart"></canvas></div>
+      </div>
+      {% endif %}
+
+      {% else %}
+      <div class="card fi" style="text-align:center;padding:40px;color:var(--muted)">
+        <div style="font-size:2.5rem;margin-bottom:12px">📉</div>
+        <div style="font-size:.88rem">Enter a ticker for a full score + insights,<br>or fill in values manually.</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div></div>
+
+{% if result and result.health is defined %}
+<script>
+new Chart(document.getElementById('radarChart'),{
+  type:'radar',
+  data:{
+    labels:['Health','Profitability','Risk','Valuation','Overall'],
+    datasets:[{
+      label:'Score',
+      data:[{{ result.health }},{{ result.profit }},{{ result.risk }},{{ result.valuation }},{{ result.overall }}],
+      backgroundColor:'rgba(59,130,246,.15)',
+      borderColor:'rgba(59,130,246,.7)',
+      borderWidth:2,
+      pointBackgroundColor:'#3b82f6',
+      pointRadius:4,
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    scales:{r:{min:0,max:10,ticks:{display:false},grid:{color:'rgba(59,130,246,.1)'},pointLabels:{color:'#94a3b8',font:{size:11}}}},
+    plugins:{legend:{display:false}}
+  }
+});
+</script>
+{% endif %}
+</body></html>

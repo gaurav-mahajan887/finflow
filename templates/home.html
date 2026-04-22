@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinFlow — All-in-One Stock Analysis Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+/* ═══════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════ */
+:root {
+  --bg-home:      #03060f;
+  --bg-section:   #070d1c;
+  --bg-card:      rgba(15,25,50,.6);
+  --bg-card-hov:  rgba(20,35,70,.85);
+  --border:       rgba(59,130,246,.14);
+  --border-hov:   rgba(59,130,246,.38);
+  --blue:         #3b82f6;
+  --blue-2:       #2563eb;
+  --cyan:         #06b6d4;
+  --green:        #22c55e;
+  --purple:       #a855f7;
+  --amber:        #f59e0b;
+  --red:          #ef4444;
+  --text:         #f1f5f9;
+  --muted:        #64748b;
+  --soft:         #94a3b8;
+  --mono:         'JetBrains Mono', monospace;
+  --sans:         'Sora', 'Segoe UI', sans-serif;
+  --radius:       16px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-home);
+  color: var(--text);
+  font-family: var(--sans);
+  overflow-x: hidden;
+}
+
+/* Ambient background glow */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 10%  0%,  rgba(59,130,246,.12) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 90%  10%, rgba(168,85,247,.09) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 60% at 50% 100%, rgba(6,182,212,.07)  0%, transparent 55%);
+}
+
+.page { position: relative; z-index: 1; }
+
+/* ── Shared layout ── */
+.container-xl { max-width: 1220px; margin: 0 auto; padding: 0 24px; }
+
+/* ── Shared animation ── */
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+@keyframes blink   { 0%,100%{opacity:1} 50%{opacity:.3} }
+@keyframes fadeUp  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+.reveal { opacity:0; transform:translateY(20px); transition:opacity .65s ease,transform .65s ease; }
+.reveal.visible { opacity:1; transform:translateY(0); }
+
+
+/* ═══════════════════════════════════════
+   NAVBAR (homepage-specific, fixed)
+═══════════════════════════════════════ */
+.home-nav {
+  position: fixed; top:0; left:0; right:0; z-index: 900;
+  background: rgba(3,6,15,.84);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  height: 60px;
+}
+.home-nav-inner {
+  max-width: 1220px; margin: 0 auto; padding: 0 24px;
+  height: 100%; display: flex; align-items: center; gap: 28px;
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 9px;
+  text-decoration: none; flex-shrink: 0;
+}
+.nav-logo-icon {
+  width: 34px; height: 34px;
+  background: rgba(59,130,246,.14);
+  border: 1px solid rgba(59,130,246,.3);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+.nav-logo-text { font-size:1.15rem; font-weight:700; color:#f1f5f9; }
+.nav-logo-text span { color: var(--blue); }
+
+.nav-links { display:flex; align-items:center; gap:4px; flex:1; }
+.nav-link {
+  padding: 6px 13px; border-radius: 8px;
+  color: var(--soft); text-decoration: none;
+  font-size: .84rem; font-weight: 500;
+  transition: all .18s;
+  border: 1px solid transparent;
+}
+.nav-link:hover  { color:#f1f5f9; background:rgba(255,255,255,.06); text-decoration:none; }
+.nav-link.active { color:#60a5fa; background:rgba(59,130,246,.12); border-color:rgba(59,130,246,.2); }
+
+.nav-right { display:flex; gap:9px; align-items:center; margin-left:auto; }
+
+/* Auth buttons */
+.btn-ghost-sm {
+  background:none; border:1px solid rgba(148,163,184,.3);
+  color:var(--soft); padding:6px 15px; border-radius:8px;
+  font-size:.82rem; font-weight:500; cursor:pointer;
+  font-family:var(--sans); transition:all .18s;
+  text-decoration:none; display:inline-block;
+}
+.btn-ghost-sm:hover { border-color:rgba(148,163,184,.6); color:#f1f5f9; text-decoration:none; }
+
+.btn-primary-sm {
+  background:linear-gradient(135deg,var(--blue-2),var(--cyan));
+  border:none; color:#fff; padding:7px 18px; border-radius:8px;
+  font-size:.82rem; font-weight:700; cursor:pointer;
+  font-family:var(--sans);
+  box-shadow:0 2px 14px rgba(37,99,235,.35);
+  transition:all .18s; text-decoration:none; display:inline-block;
+}
+.btn-primary-sm:hover { transform:translateY(-1px); box-shadow:0 4px 20px rgba(37,99,235,.5); color:#fff; text-decoration:none; }
+
+/* User avatar (when logged in) */
+.nav-user {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.22);
+  border-radius:10px; padding:5px 12px 5px 8px; cursor:pointer;
+  text-decoration:none; color:#f1f5f9;
+}
+.nav-user:hover { background:rgba(59,130,246,.18); color:#f1f5f9; text-decoration:none; }
+.nav-avatar {
+  width:26px; height:26px; border-radius:7px;
+  background:linear-gradient(135deg,#2563eb,#06b6d4);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.75rem; font-weight:800; color:#fff; flex-shrink:0;
+}
+.nav-username { font-size:.82rem; font-weight:600; }
+
+
+/* ═══════════════════════════════════════
+   HERO
+═══════════════════════════════════════ */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 120px 24px 80px;
+}
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(59,130,246,.1);
+  border: 1px solid rgba(59,130,246,.25);
+  color: #93c5fd;
+  font-size: .72rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  padding: 6px 16px; border-radius: 30px; margin-bottom: 24px;
+}
+.hero-eyebrow-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--cyan); box-shadow: 0 0 7px var(--cyan);
+  animation: blink 2s infinite;
+}
+
+.hero-title {
+  font-size: clamp(2.2rem, 6vw, 4rem);
+  font-weight: 800; letter-spacing: -1.5px;
+  line-height: 1.1; margin-bottom: 20px;
+}
+.hero-title .grad {
+  background: linear-gradient(135deg, #60a5fa, #a78bfa, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-sub {
+  font-size: 1.1rem; color: var(--soft);
+  max-width: 560px; line-height: 1.7; margin-bottom: 40px;
+}
+
+.hero-cta {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  justify-content: center; margin-bottom: 56px;
+}
+
+.btn-hero-primary {
+  background: linear-gradient(135deg,var(--blue-2),var(--cyan));
+  border: none; color: #fff;
+  padding: 14px 32px; border-radius: 12px;
+  font-size: .95rem; font-weight: 700;
+  cursor: pointer; font-family: var(--sans);
+  box-shadow: 0 4px 24px rgba(37,99,235,.4);
+  transition: all .2s; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-hero-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(37,99,235,.55);
+  color: #fff; text-decoration: none;
+}
+.btn-hero-outline {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.14);
+  color: var(--text); padding: 14px 32px; border-radius: 12px;
+  font-size: .95rem; font-weight: 600; cursor: pointer;
+  font-family: var(--sans); transition: all .2s;
+  text-decoration: none;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-hero-outline:hover {
+  background: rgba(255,255,255,.1);
+  border-color: rgba(255,255,255,.25);
+  color: var(--text); text-decoration: none; transform: translateY(-1px);
+}
+
+/* Hero stats */
+.hero-stats {
+  display: flex; gap: 40px; justify-content: center;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border); padding-top: 36px;
+}
+.hs-item { text-align: center; }
+.hs-val {
+  font-family: var(--mono); font-size: 1.6rem; font-weight: 700;
+  background: linear-gradient(135deg,var(--blue),var(--cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hs-lbl { font-size:.72rem; color:var(--muted); margin-top:2px; text-transform:uppercase; letter-spacing:.06em; }
+
+
+/* ═══════════════════════════════════════
+   SECTION SHARED
+═══════════════════════════════════════ */
+section { padding: 90px 0; }
+.section-eyebrow {
+  font-size:.7rem; font-weight:700; text-transform:uppercase;
+  letter-spacing:.12em; color:var(--blue); margin-bottom:12px;
+}
+.section-title {
+  font-size: clamp(1.6rem,3.5vw,2.4rem);
+  font-weight:800; letter-spacing:-.6px; margin-bottom:14px;
+}
+.section-sub {
+  font-size:.95rem; color:var(--soft); max-width:520px; line-height:1.7;
+}
+
+
+/* ═══════════════════════════════════════
+   FEATURES GRID
+═══════════════════════════════════════ */
+.features-section { background: var(--bg-section); }
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(260px,1fr));
+  gap: 16px; margin-top: 48px;
+}
+.feat-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 28px 24px;
+  transition: all .25s; position: relative; overflow: hidden;
+  cursor: pointer; text-decoration: none; color: var(--text);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.feat-card::before {
+  content: ''; position: absolute; inset: 0;
+  border-radius: 20px; opacity: 0; transition: opacity .25s;
+}
+.feat-card:hover {
+  border-color: rgba(59,130,246,.4);
+  transform: translateY(-6px);
+  box-shadow: 0 16px 48px rgba(0,0,0,.5);
+  color: var(--text); text-decoration: none;
+}
+.feat-card:hover::before { opacity: 1; }
+
+.fc-blue::before   { background: radial-gradient(circle at top left,rgba(59,130,246,.12),transparent 65%); }
+.fc-green::before  { background: radial-gradient(circle at top left,rgba(34,197,94,.1),  transparent 65%); }
+.fc-amber::before  { background: radial-gradient(circle at top left,rgba(245,158,11,.1), transparent 65%); }
+.fc-purple::before { background: radial-gradient(circle at top left,rgba(168,85,247,.1), transparent 65%); }
+
+.fc-icon-wrap {
+  width:48px; height:48px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.4rem; flex-shrink:0;
+}
+.fc-blue   .fc-icon-wrap { background:rgba(59,130,246,.15); border:1px solid rgba(59,130,246,.25); }
+.fc-green  .fc-icon-wrap { background:rgba(34,197,94,.15);  border:1px solid rgba(34,197,94,.25);  }
+.fc-amber  .fc-icon-wrap { background:rgba(245,158,11,.15); border:1px solid rgba(245,158,11,.25); }
+.fc-purple .fc-icon-wrap { background:rgba(168,85,247,.15); border:1px solid rgba(168,85,247,.25); }
+
+.fc-name { font-size:1rem; font-weight:700; color:#f1f5f9; }
+.fc-desc { font-size:.78rem; color:var(--muted); line-height:1.6; }
+.fc-link {
+  font-size:.76rem; font-weight:600; margin-top:auto;
+  opacity:0; transform:translateX(-4px); transition:all .2s;
+}
+.fc-blue   .fc-link { color:var(--blue); }
+.fc-green  .fc-link { color:var(--green); }
+.fc-amber  .fc-link { color:var(--amber); }
+.fc-purple .fc-link { color:var(--purple); }
+.feat-card:hover .fc-link { opacity:1; transform:translateX(0); }
+
+
+/* ═══════════════════════════════════════
+   LIVE MARKET PREVIEW
+═══════════════════════════════════════ */
+.market-preview-section { background: var(--bg-home); }
+
+.mp-header {
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:12px; margin-bottom:28px;
+}
+.mp-view-all {
+  color:var(--blue); text-decoration:none; font-size:.82rem;
+  font-weight:600; display:flex; align-items:center; gap:5px;
+  transition:gap .18s;
+}
+.mp-view-all:hover { gap:8px; color:var(--cyan); }
+
+.mp-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:14px;
+}
+.mp-card {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:18px;
+  cursor:pointer; transition:all .22s; position:relative; overflow:hidden;
+  text-decoration:none; color:var(--text);
+}
+.mp-card:hover {
+  border-color:rgba(59,130,246,.35); transform:translateY(-4px);
+  box-shadow:0 10px 30px rgba(0,0,0,.4); color:var(--text); text-decoration:none;
+}
+.mp-card::after {
+  content:''; position:absolute; bottom:0; left:0; right:0;
+  height:2px;
+  background:linear-gradient(90deg,var(--blue),var(--cyan));
+  transform:scaleX(0); transition:transform .25s; transform-origin:left;
+}
+.mp-card:hover::after { transform:scaleX(1); }
+.mp-ticker { font-size:.65rem; font-weight:700; color:var(--blue); font-family:var(--mono); letter-spacing:.06em; margin-bottom:3px; }
+.mp-name   { font-size:.8rem; color:var(--soft); margin-bottom:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mp-price  { font-family:var(--mono); font-size:1.25rem; font-weight:700; margin-bottom:5px; color:#f1f5f9; }
+.mp-chg    { display:inline-flex; align-items:center; gap:3px; font-size:.72rem; font-weight:600; font-family:var(--mono); padding:2px 8px; border-radius:5px; }
+.mp-chg.up   { color:var(--green); background:rgba(34,197,94,.12); }
+.mp-chg.down { color:var(--red);   background:rgba(239,68,68,.12); }
+.mp-mini { height:52px; margin-top:12px; }
+
+/* Skeleton */
+.mp-skeleton {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:var(--radius); height:170px; overflow:hidden; position:relative;
+}
+.mp-skeleton::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(90deg,transparent 25%,rgba(59,130,246,.05) 50%,transparent 75%);
+  background-size:200% 100%; animation:shimmer 1.5s infinite;
+}
+
+
+/* ═══════════════════════════════════════
+   WHY FINFLOW
+═══════════════════════════════════════ */
+.why-section { background: var(--bg-section); }
+
+.why-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:48px; align-items:center; margin-top:48px;
+}
+.why-list { display:flex; flex-direction:column; gap:16px; }
+.why-item {
+  display:flex; align-items:flex-start; gap:14px;
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:14px; padding:18px; transition:all .2s;
+}
+.why-item:hover { border-color:rgba(59,130,246,.3); transform:translateX(4px); }
+.why-item-icon {
+  width:40px; height:40px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.1rem; flex-shrink:0;
+}
+.why-item-title { font-size:.9rem; font-weight:700; margin-bottom:3px; color:#f1f5f9; }
+.why-item-desc  { font-size:.75rem; color:var(--muted); line-height:1.5; }
+
+.why-visual {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:20px; padding:28px;
+}
+.wv-title { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); margin-bottom:18px; }
+.wv-score-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.wvs-label  { font-size:.8rem; color:var(--soft); }
+.wvs-bar    { flex:1; height:6px; background:rgba(255,255,255,.07); border-radius:3px; margin:0 12px; overflow:hidden; }
+.wvs-fill   { height:100%; border-radius:3px; transition:width 1.2s ease; width:0%; }
+.wvs-val    { font-family:var(--mono); font-size:.82rem; font-weight:700; min-width:36px; text-align:right; }
+
+
+/* ═══════════════════════════════════════
+   RECENTLY VIEWED
+═══════════════════════════════════════ */
+.recent-section { background:var(--bg-home); padding:40px 0 0; display:none; }
+.recent-grid { display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none; }
+.recent-grid::-webkit-scrollbar { display:none; }
+.recent-card {
+  flex-shrink:0; background:var(--bg-card);
+  border:1px solid var(--border); border-radius:12px;
+  padding:12px 16px; text-decoration:none; color:var(--text);
+  min-width:130px; transition:all .2s;
+}
+.recent-card:hover { border-color:rgba(59,130,246,.4); color:var(--text); text-decoration:none; }
+.recent-ticker { font-size:.65rem; font-weight:700; color:var(--blue); font-family:var(--mono); margin-bottom:3px; }
+.recent-name   { font-size:.72rem; color:var(--soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px; }
+.recent-price  { font-family:var(--mono); font-size:.88rem; font-weight:700; margin-top:5px; color:#f1f5f9; }
+
+
+/* ═══════════════════════════════════════
+   NEWS PREVIEW
+═══════════════════════════════════════ */
+.news-preview-section { background:var(--bg-section); }
+.news-preview-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:14px; margin-top:0;
+}
+.news-preview-card {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:16px; overflow:hidden;
+  text-decoration:none; color:var(--text);
+  display:flex; flex-direction:column; transition:all .22s;
+}
+.news-preview-card:hover {
+  border-color:rgba(59,130,246,.4); transform:translateY(-4px);
+  box-shadow:0 12px 36px rgba(0,0,0,.45); color:var(--text); text-decoration:none;
+}
+.npc-thumb {
+  height:110px; position:relative; overflow:hidden;
+  background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(6,182,212,.1));
+  display:flex; align-items:center; justify-content:center; font-size:2rem;
+}
+.npc-thumb img { width:100%; height:100%; object-fit:cover; opacity:.82; }
+.npc-source {
+  position:absolute; top:8px; left:8px;
+  background:rgba(0,0,0,.65); backdrop-filter:blur(4px);
+  border-radius:5px; padding:2px 8px;
+  font-size:.62rem; font-weight:700; color:#e2e8f0;
+}
+.npc-body { padding:14px; flex:1; display:flex; flex-direction:column; gap:8px; }
+.npc-title {
+  font-size:.84rem; font-weight:700; color:#f1f5f9; line-height:1.45;
+  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+}
+.npc-footer {
+  font-size:.68rem; color:var(--muted); margin-top:auto;
+  display:flex; align-items:center; justify-content:space-between;
+}
+/* News skeleton */
+.news-skeleton {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:16px; height:220px; overflow:hidden; position:relative;
+}
+.news-skeleton::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(90deg,transparent 25%,rgba(59,130,246,.05) 50%,transparent 75%);
+  background-size:200% 100%; animation:shimmer 1.5s infinite;
+}
+
+
+/* ═══════════════════════════════════════
+   CTA
+═══════════════════════════════════════ */
+.cta-section { background:var(--bg-home); text-align:center; padding:100px 24px; }
+.cta-inner {
+  background:linear-gradient(135deg,rgba(37,99,235,.15),rgba(6,182,212,.08));
+  border:1px solid rgba(59,130,246,.25);
+  border-radius:28px; padding:60px 40px;
+  max-width:700px; margin:0 auto; position:relative; overflow:hidden;
+}
+.cta-inner::before {
+  content:''; position:absolute; top:-40px; right:-40px;
+  width:200px; height:200px; border-radius:50%;
+  background:radial-gradient(circle,rgba(168,85,247,.2),transparent 70%);
+}
+.cta-title { font-size:clamp(1.6rem,3vw,2.2rem); font-weight:800; letter-spacing:-.5px; margin-bottom:14px; color:#f1f5f9; }
+.cta-sub   { font-size:.9rem; color:var(--soft); margin-bottom:32px; }
+.cta-btns  { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+
+
+/* ═══════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════ */
+.ff-footer {
+  background: #020509;
+  border-top: 1px solid var(--border);
+  padding: 60px 0 32px;
+}
+.footer-grid {
+  display:grid;
+  grid-template-columns:1.8fr 1fr 1fr 1fr;
+  gap:40px; margin-bottom:48px;
+}
+.fb-logo {
+  display:flex; align-items:center; gap:8px;
+  margin-bottom:12px; text-decoration:none;
+}
+.fb-logo-icon {
+  width:30px; height:30px;
+  background:rgba(59,130,246,.14); border:1px solid rgba(59,130,246,.3);
+  border-radius:8px; display:flex; align-items:center; justify-content:center;
+}
+.fb-logo-text { font-size:1rem; font-weight:700; color:#f1f5f9; }
+.fb-logo-text span { color:var(--blue); }
+.fb-desc { font-size:.78rem; color:var(--muted); line-height:1.65; max-width:240px; }
+.fb-badges { display:flex; gap:7px; margin-top:14px; flex-wrap:wrap; }
+.fb-badge {
+  font-size:.65rem; font-weight:600; letter-spacing:.05em;
+  padding:3px 10px; border-radius:20px;
+  background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.2);
+  color:#93c5fd;
+}
+.footer-col-title {
+  font-size:.72rem; font-weight:700; text-transform:uppercase;
+  letter-spacing:.1em; color:var(--soft); margin-bottom:14px;
+}
+.footer-col-links { display:flex; flex-direction:column; gap:10px; }
+.footer-col-links a {
+  color:#94a3b8; text-decoration:none; font-size:.8rem;
+  transition:color .18s;
+  display:flex; align-items:center; gap:6px;
+}
+.footer-col-links a:hover { color:#f1f5f9; }
+
+/* Social links — visible & hoverable */
+.social-link {
+  display:inline-flex; align-items:center; gap:7px;
+  color:#94a3b8; text-decoration:none; font-size:.8rem;
+  padding:6px 0; transition:color .18s;
+}
+.social-link:hover { color:#f1f5f9; }
+.social-link .sicon {
+  width:28px; height:28px; border-radius:7px;
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.85rem; transition:all .18s; flex-shrink:0;
+}
+.social-link:hover .sicon { background:rgba(59,130,246,.15); border-color:rgba(59,130,246,.3); }
+
+.footer-bottom {
+  border-top:1px solid var(--border); padding-top:22px;
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:10px;
+}
+.fb-copy  { font-size:.75rem; color:var(--muted); }
+.fb-right { font-size:.72rem; color:var(--muted); }
+
+
+/* ═══════════════════════════════════════
+   LOGIN POPUP
+═══════════════════════════════════════ */
+.popup-overlay {
+  position:fixed; inset:0; z-index:2000;
+  background:rgba(0,0,0,.65); backdrop-filter:blur(6px);
+  display:none; align-items:center; justify-content:center;
+}
+.popup-overlay.show { display:flex; }
+.popup-box {
+  background:linear-gradient(160deg,#0d1829,#0a1525);
+  border:1px solid rgba(59,130,246,.26);
+  border-radius:24px; padding:36px 32px;
+  width:420px; max-width:95vw; position:relative;
+  box-shadow:0 28px 70px rgba(0,0,0,.75);
+  animation:popupIn .32s ease;
+}
+@keyframes popupIn {
+  from{opacity:0;transform:scale(.96) translateY(16px)}
+  to{opacity:1;transform:scale(1) translateY(0)}
+}
+.popup-close {
+  position:absolute; top:14px; right:16px;
+  background:none; border:none; color:#64748b;
+  font-size:1.15rem; cursor:pointer; transition:color .15s;
+}
+.popup-close:hover { color:#f1f5f9; }
+.popup-icon {
+  width:50px; height:50px; border-radius:13px;
+  background:linear-gradient(135deg,rgba(59,130,246,.2),rgba(6,182,212,.14));
+  border:1px solid rgba(59,130,246,.28);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.4rem; margin-bottom:16px;
+}
+.popup-title { font-size:1.12rem; font-weight:800; letter-spacing:-.3px; margin-bottom:8px; color:#f1f5f9; }
+.popup-sub   { font-size:.82rem; color:#94a3b8; line-height:1.65; margin-bottom:20px; }
+.popup-perks { display:flex; flex-direction:column; gap:8px; margin-bottom:22px; }
+.perk { display:flex; align-items:center; gap:9px; font-size:.79rem; color:#94a3b8; }
+.perk-dot { width:6px; height:6px; border-radius:50%; background:#22c55e; flex-shrink:0; }
+.popup-btns { display:flex; flex-direction:column; gap:9px; }
+.popup-btn-primary {
+  background:linear-gradient(135deg,#2563eb,#0ea5e9);
+  border:none; color:#fff; padding:12px; border-radius:10px;
+  font-weight:700; font-size:.88rem; cursor:pointer;
+  font-family:var(--sans); text-decoration:none;
+  text-align:center; display:block; transition:opacity .15s;
+}
+.popup-btn-primary:hover { opacity:.88; color:#fff; text-decoration:none; }
+.popup-btn-outline {
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(59,130,246,.18);
+  color:#f1f5f9; padding:11px; border-radius:10px;
+  font-weight:600; font-size:.88rem; cursor:pointer;
+  font-family:var(--sans); text-decoration:none;
+  text-align:center; display:block; transition:all .15s;
+}
+.popup-btn-outline:hover { background:rgba(255,255,255,.09); color:#f1f5f9; text-decoration:none; }
+.popup-btn-later {
+  background:none; border:none; color:#64748b;
+  font-size:.76rem; cursor:pointer; font-family:var(--sans);
+  text-align:center; transition:color .15s; padding:4px; width:100%;
+}
+.popup-btn-later:hover { color:#94a3b8; }
+
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════ */
+@media (max-width:900px) {
+  .footer-grid { grid-template-columns:1fr 1fr; }
+  .why-grid    { grid-template-columns:1fr; }
+}
+@media (max-width:600px) {
+  .footer-grid { grid-template-columns:1fr; }
+  .hero        { padding:100px 16px 60px; }
+  .hero-stats  { gap:24px; }
+  section      { padding:60px 0; }
+  .cta-inner   { padding:36px 20px; }
+  .nav-links   { display:none; }
+}
+</style>
+</head>
+
+<body>
+<div class="page">
+
+<!-- ══════════════════════
+     NAVBAR
+══════════════════════ -->
+<nav class="home-nav">
+  <div class="home-nav-inner">
+    <a class="nav-logo" href="/">
+      <span class="nav-logo-icon">
+        <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
+          <polyline points="2,16 7,10 11,13 16,6 20,8"
+            stroke="#3b82f6" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="20" cy="8" r="2" fill="#06b6d4"/>
+        </svg>
+      </span>
+      <span class="nav-logo-text">Fin<span>Flow</span></span>
+    </a>
+
+    <div class="nav-links">
+      <a href="/"          class="nav-link active">🏠 Home</a>
+      <a href="/market"    class="nav-link">📊 Market</a>
+      <a href="/tools"     class="nav-link">🛠 Analysis</a>
+      <a href="/watchlist" class="nav-link">💼 Portfolio</a>
+      <a href="/news"      class="nav-link">📰 News</a>
+    </div>
+
+    <div class="nav-right">
+      {% if session.get('user') %}
+        <a href="/watchlist" class="nav-user">
+          <span class="nav-avatar">{{ session['user'][0].upper() }}</span>
+          <span class="nav-username">{{ session['user'] }}</span>
+        </a>
+        <a href="/logout" class="btn-ghost-sm">Logout</a>
+      {% else %}
+        <a href="/login"  class="btn-ghost-sm">Login</a>
+        <a href="/signup" class="btn-primary-sm">Sign Up</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+
+<!-- ══════════════════════
+     HERO
+══════════════════════ -->
+<section class="hero">
+  <div class="hero-eyebrow">
+    <span class="hero-eyebrow-dot"></span>
+    Live NSE &amp; BSE Data
+  </div>
+
+  <h1 class="hero-title">
+    All-in-One<br>
+    <span class="grad">Stock Analysis Platform</span>
+  </h1>
+
+  <p class="hero-sub">
+    Track live markets, analyse company fundamentals, run DCF valuations
+    and build your portfolio — all in one beautifully designed platform.
+  </p>
+
+  <div class="hero-cta">
+    <a href="/market" class="btn-hero-primary">📊 Explore Market →</a>
+    <a href="/tools"  class="btn-hero-outline">🛠 Start Analysis</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hs-item"><div class="hs-val">20+</div><div class="hs-lbl">NSE Stocks Tracked</div></div>
+    <div class="hs-item"><div class="hs-val">6</div><div class="hs-lbl">Analysis Tools</div></div>
+    <div class="hs-item"><div class="hs-val">Live</div><div class="hs-lbl">Real-time Data</div></div>
+    <div class="hs-item"><div class="hs-val">DCF</div><div class="hs-lbl">Valuation Engine</div></div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════
+     FEATURES
+══════════════════════ -->
+<section class="features-section">
+  <div class="container-xl">
+    <div class="reveal">
+      <div class="section-eyebrow">What we offer</div>
+      <h2 class="section-title">Everything you need to<br>analyse Indian equities</h2>
+      <p class="section-sub">From live price data to full equity research — FinFlow brings professional-grade tools to every investor.</p>
+    </div>
+
+    <div class="features-grid reveal">
+      <a href="/market" class="feat-card fc-blue">
+        <div class="fc-icon-wrap">📊</div>
+        <div class="fc-name">Market Dashboard</div>
+        <div class="fc-desc">Live NIFTY &amp; SENSEX, sector heatmap, top gainers/losers, 52-week breakouts and a scrolling market ticker.</div>
+        <div class="fc-link">→ Open Dashboard</div>
+      </a>
+      <a href="/tools" class="feat-card fc-green">
+        <div class="fc-icon-wrap">🛠</div>
+        <div class="fc-name">Financial Analysis</div>
+        <div class="fc-desc">DCF valuation, balance sheet analysis, income statement, ratio screening with auto-insights and risk flags.</div>
+        <div class="fc-link">→ Open Tools</div>
+      </a>
+      <a href="/watchlist" class="feat-card fc-amber">
+        <div class="fc-icon-wrap">💼</div>
+        <div class="fc-name">Portfolio Tracker</div>
+        <div class="fc-desc">Track your holdings, monitor P&L in real-time and visualise allocation with live charts and CSV export.</div>
+        <div class="fc-link">→ Open Portfolio</div>
+      </a>
+      <a href="/research-report" class="feat-card fc-purple">
+        <div class="fc-icon-wrap">📑</div>
+        <div class="fc-name">Research Reports</div>
+        <div class="fc-desc">Automated 9-section equity research: DCF + WACC + ratios + risk analysis + investment verdict. One click.</div>
+        <div class="fc-link">→ Generate Report</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════
+     LIVE MARKET PREVIEW
+══════════════════════ -->
+<section class="market-preview-section">
+  <div class="container-xl">
+    <div class="mp-header reveal">
+      <div>
+        <div class="section-eyebrow">Live Market</div>
+        <h2 class="section-title" style="font-size:1.8rem;margin-bottom:0">Trending right now</h2>
+      </div>
+      <a href="/market" class="mp-view-all">View full dashboard →</a>
+    </div>
+    <div class="mp-grid" id="mpGrid">
+      <div class="mp-skeleton"></div>
+      <div class="mp-skeleton"></div>
+      <div class="mp-skeleton"></div>
+      <div class="mp-skeleton"></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════
+     WHY FINFLOW
+══════════════════════ -->
+<section class="why-section">
+  <div class="container-xl">
+    <div class="why-grid">
+      <div class="reveal">
+        <div class="section-eyebrow">Why FinFlow</div>
+        <h2 class="section-title">Built for serious<br>retail investors</h2>
+        <p class="section-sub" style="margin-bottom:32px">Professional equity research tools — without the Bloomberg price tag.</p>
+
+        <div class="why-list">
+          <div class="why-item">
+            <div class="why-item-icon" style="background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.2)">⚡</div>
+            <div>
+              <div class="why-item-title">Real-time Data</div>
+              <div class="why-item-desc">Powered by yFinance — live NSE and BSE prices, updated every minute on the dashboard.</div>
+            </div>
+          </div>
+          <div class="why-item">
+            <div class="why-item-icon" style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.2)">🧠</div>
+            <div>
+              <div class="why-item-title">Smart Auto-Insights</div>
+              <div class="why-item-desc">Rule-based analysis flags risks, scores fundamentals out of 10 and writes plain-English insights automatically.</div>
+            </div>
+          </div>
+          <div class="why-item">
+            <div class="why-item-icon" style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.2)">📊</div>
+            <div>
+              <div class="why-item-title">All-in-One Platform</div>
+              <div class="why-item-desc">Market tracking, DCF, ratios, research reports, news and portfolio — no switching apps.</div>
+            </div>
+          </div>
+          <div class="why-item">
+            <div class="why-item-icon" style="background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.2)">🎨</div>
+            <div>
+              <div class="why-item-title">Clean, Fast UI</div>
+              <div class="why-item-desc">Dark glass design, smooth animations, skeleton loaders and a 5-minute response cache — zero clutter.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Animated score card -->
+      <div class="why-visual reveal">
+        <div class="wv-title">Sample Analysis Score — RELIANCE.NS</div>
+        <div class="wv-score-row">
+          <div class="wvs-label">Overall</div>
+          <div class="wvs-bar"><div class="wvs-fill score-bar-fill" data-width="80" style="background:#3b82f6"></div></div>
+          <div class="wvs-val" style="color:#3b82f6">8/10</div>
+        </div>
+        <div class="wv-score-row">
+          <div class="wvs-label">Health</div>
+          <div class="wvs-bar"><div class="wvs-fill score-bar-fill" data-width="70" style="background:#22c55e"></div></div>
+          <div class="wvs-val" style="color:#22c55e">7/10</div>
+        </div>
+        <div class="wv-score-row">
+          <div class="wvs-label">Profitability</div>
+          <div class="wvs-bar"><div class="wvs-fill score-bar-fill" data-width="60" style="background:#f59e0b"></div></div>
+          <div class="wvs-val" style="color:#f59e0b">6/10</div>
+        </div>
+        <div class="wv-score-row">
+          <div class="wvs-label">Risk</div>
+          <div class="wvs-bar"><div class="wvs-fill score-bar-fill" data-width="80" style="background:#06b6d4"></div></div>
+          <div class="wvs-val" style="color:#06b6d4">8/10</div>
+        </div>
+        <div class="wv-score-row">
+          <div class="wvs-label">Valuation</div>
+          <div class="wvs-bar"><div class="wvs-fill score-bar-fill" data-width="50" style="background:#a855f7"></div></div>
+          <div class="wvs-val" style="color:#a855f7">5/10</div>
+        </div>
+
+        <div style="border-top:1px solid rgba(59,130,246,.12);margin-top:18px;padding-top:14px">
+          <div style="font-size:.68rem;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em">Key Highlights</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="font-size:.78rem;background:rgba(34,197,94,.1);border-radius:7px;padding:7px 10px;color:#f1f5f9">✅ Strong liquidity — current ratio above 2</div>
+            <div style="font-size:.78rem;background:rgba(245,158,11,.1);border-radius:7px;padding:7px 10px;color:#f1f5f9">🟡 Moderate leverage — D/E within limits</div>
+            <div style="font-size:.78rem;background:rgba(59,130,246,.1);border-radius:7px;padding:7px 10px;color:#f1f5f9">✅ Healthy free cash flow generation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════
+     RECENTLY VIEWED
+══════════════════════ -->
+<section class="recent-section" id="recentSection">
+  <div class="container-xl">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div>
+        <div class="section-eyebrow">Your Activity</div>
+        <h2 class="section-title" style="font-size:1.4rem;margin-bottom:0">Recently Viewed</h2>
+      </div>
+      <button onclick="clearRecent()"
+        style="background:none;border:1px solid rgba(100,116,139,.3);color:var(--muted);padding:5px 12px;border-radius:7px;font-size:.72rem;cursor:pointer;font-family:var(--sans);transition:all .18s"
+        onmouseover="this.style.borderColor='rgba(148,163,184,.5)';this.style.color='#f1f5f9'"
+        onmouseout="this.style.borderColor='rgba(100,116,139,.3)';this.style.color='var(--muted)'">
+        Clear
+      </button>
+    </div>
+    <div class="recent-grid" id="recentGrid"></div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════
+     NEWS PREVIEW
+══════════════════════ -->
+<section class="news-preview-section">
+  <div class="container-xl">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px" class="reveal">
+      <div>
+        <div class="section-eyebrow">Latest Headlines</div>
+        <h2 class="section-title" style="font-size:1.8rem;margin-bottom:0">Market News</h2>
+      </div>
+      <a href="/news"
+        style="color:var(--blue);text-decoration:none;font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:5px;transition:color .18s"
+        onmouseover="this.style.color='#06b6d4'" onmouseout="this.style.color='#3b82f6'">
+        All news →
+      </a>
+    </div>
+    <div class="news-preview-grid" id="newsPreviewGrid">
+      <div class="news-skeleton"></div>
+      <div class="news-skeleton"></div>
+      <div class="news-skeleton"></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════
+     CTA
+══════════════════════ -->
+<section class="cta-section">
+  <div class="cta-inner reveal">
+    <h2 class="cta-title">Start analyzing smarter today</h2>
+    <p class="cta-sub">Join FinFlow — your personal equity research platform for Indian markets.</p>
+    <div class="cta-btns">
+      <a href="/market" class="btn-hero-primary">📊 Explore Market →</a>
+      <a href="/tools"  class="btn-hero-outline">🛠 Run Analysis</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════
+     FOOTER
+══════════════════════ -->
+<footer class="ff-footer">
+  <div class="container-xl">
+    <div class="footer-grid">
+
+      <!-- Brand -->
+      <div>
+        <a class="fb-logo" href="/">
+          <span class="fb-logo-icon">
+            <svg width="16" height="16" viewBox="0 0 22 22" fill="none">
+              <polyline points="2,16 7,10 11,13 16,6 20,8" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="20" cy="8" r="2.2" fill="#06b6d4"/>
+            </svg>
+          </span>
+          <span class="fb-logo-text">Fin<span>Flow</span></span>
+        </a>
+        <p class="fb-desc">All-in-one stock analysis platform for Indian equities. Market tracking, DCF valuation, financial analysis and portfolio management in one place.</p>
+        <div class="fb-badges">
+          <span class="fb-badge">NSE</span>
+          <span class="fb-badge">BSE</span>
+          <span class="fb-badge">yFinance</span>
+          <span class="fb-badge">Flask</span>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div>
+        <div class="footer-col-title">Features</div>
+        <div class="footer-col-links">
+          <a href="/market">📊 Market Dashboard</a>
+          <a href="/tools">🛠 Analysis Tools</a>
+          <a href="/watchlist">💼 Portfolio Tracker</a>
+          <a href="/research-report">📑 Research Reports</a>
+          <a href="/compare">⚖️ Stock Comparison</a>
+          <a href="/news">📰 Market News</a>
+        </div>
+      </div>
+
+      <!-- Analysis tools -->
+      <div>
+        <div class="footer-col-title">Analysis</div>
+        <div class="footer-col-links">
+          <a href="/input">DCF Valuation</a>
+          <a href="/balance-sheet">Balance Sheet</a>
+          <a href="/profit_statement">Profit Statement</a>
+          <a href="/ratio_analysis">Ratio Analysis</a>
+          <a href="/compare">Stock Comparison</a>
+        </div>
+      </div>
+
+      <!-- Connect -->
+      <div>
+        <div class="footer-col-title">Connect</div>
+        <div class="footer-col-links" style="gap:12px">
+
+          <!-- LinkedIn -->
+          <a href="https://linkedin.com/in/gaurav-mahajan-081"
+             target="_blank" rel="noopener"
+             class="social-link">
+            <span class="sicon">💼</span>
+            LinkedIn
+          </a>
+
+          <!-- Email -->
+          <a href="mailto:gauravmahajan081@gmail.com"
+             class="social-link">
+            <span class="sicon">✉️</span>
+            gauravmahajan081@gmail.com
+          </a>
+
+          <!-- GitHub placeholder -->
+          <span class="social-link" style="cursor:default;opacity:.45" title="GitHub coming soon">
+            <span class="sicon">🐙</span>
+            GitHub (coming soon)
+          </span>
+
+        </div>
+
+        <div style="margin-top:22px">
+          <div class="footer-col-title">Data</div>
+          <div class="footer-col-links">
+            <a href="https://finance.yahoo.com" target="_blank" rel="noopener">Yahoo Finance</a>
+            <a href="https://www.nseindia.com"  target="_blank" rel="noopener">NSE India</a>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /footer-grid -->
+
+    <div class="footer-bottom">
+      <div class="fb-copy">© 2026 FinFlow · Built by Gaurav Mahajan</div>
+      <div class="fb-right">Data for educational purposes only — not financial advice.</div>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ══════════════════════
+     LOGIN POPUP
+     (shown once per 24h to non-logged-in users)
+══════════════════════ -->
+{% if not session.get('user') %}
+<div class="popup-overlay" id="loginModal">
+  <div class="popup-box">
+    <button class="popup-close" onclick="closePopup()">✕</button>
+    <div class="popup-icon">🔐</div>
+    <div class="popup-title">Save your progress &amp; unlock insights</div>
+    <p class="popup-sub">Create a free account to save your portfolio, access full research reports and get personalised alerts on your tracked stocks.</p>
+    <div class="popup-perks">
+      <div class="perk"><span class="perk-dot"></span>Save &amp; sync watchlist across devices</div>
+      <div class="perk"><span class="perk-dot"></span>Access full research reports &amp; DCF history</div>
+      <div class="perk"><span class="perk-dot"></span>Alerts on your tracked stocks</div>
+    </div>
+    <div class="popup-btns">
+      <a href="/signup" class="popup-btn-primary">🚀 Create Free Account</a>
+      <a href="/login"  class="popup-btn-outline">Login to existing account</a>
+      <button class="popup-btn-later" onclick="closePopup()">Maybe later — remind me tomorrow</button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+<!-- ══════════════════════
+     JAVASCRIPT
+══════════════════════ -->
+<script>
+/* ── Scroll reveal ── */
+const revealObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+/* ── Score bar animation ── */
+const barObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      e.target.querySelectorAll('.score-bar-fill').forEach(bar => {
+        bar.style.width = bar.dataset.width + '%';
+      });
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.why-visual').forEach(el => barObs.observe(el));
+
+/* ── Live market preview ── */
+async function loadMarketPreview(){
+  try{
+    const res  = await fetch('/api/ticker-bar');
+    const data = await res.json();
+    if(!data || !data.length) return;
+
+    const stocks = data.slice(0, 4);
+    const grid   = document.getElementById('mpGrid');
+    grid.innerHTML = '';
+
+    stocks.forEach((s, i) => {
+      const div = document.createElement('a');
+      div.href = '/stock/' + s.ticker;
+      div.className = 'mp-card';
+      const dir  = s.direction;
+      const sign = s.percent >= 0 ? '+' : '';
+      const fmtP = n => '₹' + Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+      div.innerHTML = `
+        <div class="mp-ticker">${s.display} · NSE</div>
+        <div class="mp-name">${s.display}</div>
+        <div class="mp-price">${fmtP(s.price)}</div>
+        <span class="mp-chg ${dir}">${dir==='up'?'▲':'▼'} ${sign}${s.percent.toFixed(2)}%</span>
+        <div class="mp-mini"><canvas id="hmChart${i}"></canvas></div>`;
+      grid.appendChild(div);
+
+      setTimeout(() => {
+        const ctx = document.getElementById('hmChart' + i);
+        if(!ctx) return;
+        // Simulated sparkline based on price and direction
+        const base = s.price;
+        const pts  = Array.from({length:10}, (_,k) =>
+          base * (1 + (Math.random() - .5) * .018));
+        pts[pts.length - 1] = s.price;
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: pts.map((_,j) => j),
+            datasets: [{
+              data: pts,
+              borderColor: dir==='up' ? '#22c55e' : '#ef4444',
+              borderWidth: 1.6, pointRadius: 0, fill: true, tension: .35,
+              backgroundColor: dir==='up' ? 'rgba(34,197,94,.07)' : 'rgba(239,68,68,.07)',
+            }]
+          },
+          options: {
+            responsive:true, maintainAspectRatio:false, animation:false,
+            plugins:{ legend:{display:false}, tooltip:{enabled:false} },
+            scales:{ x:{display:false}, y:{display:false} }
+          }
+        });
+      }, 120);
+    });
+  } catch(e){ console.error('[market-preview]', e); }
+}
+
+/* ── Recently Viewed ── */
+const RECENT_KEY = 'ff_recently_viewed';
+function getRecent(){ return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }
+function clearRecent(){
+  localStorage.removeItem(RECENT_KEY);
+  document.getElementById('recentSection').style.display = 'none';
+}
+function renderRecent(){
+  const recent = getRecent();
+  if(!recent.length){
+    document.getElementById('recentSection').style.display = 'none';
+    return;
+  }
+  document.getElementById('recentSection').style.display = 'block';
+  document.getElementById('recentGrid').innerHTML = recent.slice(0, 6).map(s => `
+    <a href="/stock/${s.ticker}" class="recent-card">
+      <div class="recent-ticker">${s.ticker.replace('.NS','')}</div>
+      <div class="recent-name">${(s.name||'').slice(0,20)}</div>
+      <div class="recent-price">₹${s.price || '—'}</div>
+    </a>`).join('');
+}
+
+/* ── News Preview ── */
+async function loadNewsPreview(){
+  try{
+    const r        = await fetch('/api/news?limit=3');
+    const articles = await r.json();
+    const grid     = document.getElementById('newsPreviewGrid');
+    if(!articles || !articles.length){
+      grid.innerHTML = '<div style="color:#64748b;font-size:.82rem">No news available right now — try again later.</div>';
+      return;
+    }
+    grid.innerHTML = articles.map(a => `
+      <a href="${a.url}" target="_blank" rel="noopener" class="news-preview-card">
+        <div class="npc-thumb">
+          ${a.thumbnail
+            ? `<img src="${a.thumbnail}" alt="" loading="lazy">`
+            : '📰'}
+          <div class="npc-source">${(a.source||'').slice(0,18)}</div>
+        </div>
+        <div class="npc-body">
+          <div class="npc-title">${a.title}</div>
+          <div class="npc-footer">
+            <span>${a.source || ''}</span>
+            <span>↗ Read</span>
+          </div>
+        </div>
+      </a>`).join('');
+  } catch(e){ console.error('[news-preview]', e); }
+}
+
+/* ── Smart Login Popup ── */
+const FF_POPUP_KEY = 'ff_popup_last_shown';
+const FF_ONE_DAY   = 24 * 60 * 60 * 1000;
+
+function closePopup(){
+  const m = document.getElementById('loginModal');
+  if(m) m.classList.remove('show');
+  localStorage.setItem(FF_POPUP_KEY, Date.now().toString());
+}
+
+/* Close on overlay click */
+document.getElementById('loginModal')?.addEventListener('click', function(e){
+  if(e.target === this) closePopup();
+});
+/* Close on Escape */
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closePopup(); });
+
+/* Auto-show after 6s (once per 24h, only when logged out) */
+{% if not session.get('user') %}
+window.addEventListener('load', () => {
+  const last = localStorage.getItem(FF_POPUP_KEY);
+  const now  = Date.now();
+  if(!last || (now - parseInt(last)) > FF_ONE_DAY){
+    setTimeout(() => {
+      const m = document.getElementById('loginModal');
+      if(m){ m.classList.add('show'); localStorage.setItem(FF_POPUP_KEY, now.toString()); }
+    }, 6000);
+  }
+});
+{% endif %}
+
+/* ── Init all on load ── */
+window.addEventListener('load', () => {
+  setTimeout(loadMarketPreview, 300);
+  setTimeout(loadNewsPreview,   500);
+  renderRecent();
+});
+</script>
+</div>
+</body>
+</html>

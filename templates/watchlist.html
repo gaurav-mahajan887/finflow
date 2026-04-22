@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>My Portfolio — FinFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--bg:#060d1a;--bg-2:#0d1829;--bg-card:rgba(13,24,46,.75);--bg-hov:rgba(18,34,64,.9);--border:rgba(59,130,246,.13);--border-hov:rgba(59,130,246,.35);--blue:#3b82f6;--cyan:#06b6d4;--green:#22c55e;--green-bg:rgba(34,197,94,.12);--red:#ef4444;--red-bg:rgba(239,68,68,.12);--amber:#f59e0b;--text:#f1f5f9;--muted:#64748b;--soft:#94a3b8;--mono:'JetBrains Mono',monospace;--sans:'Sora','Segoe UI',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(59,130,246,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.022) 1px,transparent 1px);background-size:52px 52px}
+.z1{position:relative;z-index:1}
+.wrap{max-width:1200px;margin:0 auto;padding:28px 20px 70px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:22px;backdrop-filter:blur(12px);margin-bottom:16px}
+.card-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-title::before{content:'';display:block;width:3px;height:12px;background:var(--blue);border-radius:2px}
+
+/* PAGE HEADER */
+.page-hdr{margin-bottom:28px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.page-title{font-size:1.5rem;font-weight:800;letter-spacing:-.4px}
+.page-sub{font-size:.78rem;color:var(--muted);margin-top:3px}
+
+/* SUMMARY CARDS */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:20px}
+.sum-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:18px 16px;text-align:center;position:relative;overflow:hidden}
+.sum-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 14px 14px}
+.sum-card.invested::after{background:var(--blue)}
+.sum-card.value::after{background:var(--cyan)}
+.sum-card.pnl-pos::after{background:var(--green)}
+.sum-card.pnl-neg::after{background:var(--red)}
+.sum-card.returns::after{background:var(--amber)}
+.sum-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+.sum-value{font-family:var(--mono);font-size:1.3rem;font-weight:800;color:#f1f5f9}
+.sum-value.green{color:var(--green)}.sum-value.red{color:var(--red)}.sum-value.blue{color:var(--blue)}.sum-value.amber{color:var(--amber)}
+
+/* ADD STOCK */
+.add-section{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.add-input{flex:1;min-width:160px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:#f1f5f9;font-family:var(--sans);font-size:.88rem;outline:none;transition:border-color .2s}
+.add-input::placeholder{color:var(--muted)}
+.add-input:focus{border-color:var(--blue)}
+.add-btn{background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;color:#fff;padding:10px 18px;border-radius:10px;font-weight:700;font-size:.85rem;cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:opacity .15s}
+.add-btn:hover{opacity:.88}
+.add-btn.danger{background:linear-gradient(135deg,var(--red),#b91c1c)}
+.export-btn{background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--soft);padding:10px 16px;border-radius:10px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .18s}
+.export-btn:hover{border-color:var(--border-hov);color:#f1f5f9}
+
+/* PREVIEW CARD */
+.preview-box{display:none;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:13px 16px;margin-bottom:12px}
+.pb-name{font-weight:700;font-size:.88rem;color:#f1f5f9;margin-bottom:2px}
+.pb-meta{font-size:.7rem;color:var(--muted)}
+.pb-price{font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--blue);margin-top:4px}
+
+/* CHARTS ROW */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+@media(max-width:640px){.charts-row{grid-template-columns:1fr}}
+
+/* PORTFOLIO TABLE */
+.port-table{width:100%;border-collapse:separate;border-spacing:0 8px}
+.port-table thead th{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 14px 6px;text-align:left}
+.port-table thead th:last-child{text-align:right}
+.port-table tbody tr{background:var(--bg-card);border-radius:10px;cursor:pointer;transition:all .18s}
+.port-table tbody tr:hover{background:var(--bg-hov);transform:translateX(2px)}
+.port-table tbody td{padding:13px 14px;font-size:.82rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.port-table tbody td:first-child{border-left:1px solid var(--border);border-radius:10px 0 0 10px}
+.port-table tbody td:last-child{border-right:1px solid var(--border);border-radius:0 10px 10px 0;text-align:right}
+.pt-ticker{font-weight:700;font-family:var(--mono);font-size:.8rem;color:var(--blue)}
+.pt-name{font-size:.7rem;color:var(--muted);margin-top:1px}
+.pt-mono{font-family:var(--mono);font-weight:600}
+.pt-pnl-pos{font-family:var(--mono);font-weight:700;color:var(--green)}
+.pt-pnl-neg{font-family:var(--mono);font-weight:700;color:var(--red)}
+.pt-remove{background:none;border:1px solid rgba(239,68,68,.3);color:var(--red);padding:3px 9px;border-radius:6px;font-size:.68rem;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.pt-remove:hover{background:var(--red-bg);border-color:var(--red)}
+
+/* EMPTY STATE */
+.empty-portfolio{text-align:center;padding:48px 20px;color:var(--muted)}
+.ep-icon{font-size:3rem;margin-bottom:14px}
+.ep-title{font-size:.95rem;font-weight:700;color:#f1f5f9;margin-bottom:6px}
+
+/* LOADING ROW */
+.loading-row td{padding:20px;text-align:center;color:var(--muted);font-size:.82rem}
+
+.fi{animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body><div class="z1">
+{% include 'navbar.html' %}
+<div class="wrap">
+
+  <div class="page-hdr fi">
+    <div>
+      <div class="page-title">💼 My Portfolio</div>
+      <div class="page-sub">Track holdings, monitor P&L and analyse allocation</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="add-btn danger" onclick="clearPortfolio()">🗑 Clear All</button>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="summary-grid fi" id="summaryGrid">
+    <div class="sum-card invested"><div class="sum-label">Invested</div><div class="sum-value blue" id="sumInvested">₹0</div></div>
+    <div class="sum-card value"><div class="sum-label">Current Value</div><div class="sum-value" id="sumValue">₹0</div></div>
+    <div class="sum-card pnl-pos" id="sumPnLCard"><div class="sum-label">Total P&L</div><div class="sum-value" id="sumPnL">₹0</div></div>
+    <div class="sum-card returns"><div class="sum-label">% Return</div><div class="sum-value amber" id="sumReturn">0.00%</div></div>
+    <div class="sum-card invested"><div class="sum-label">Holdings</div><div class="sum-value blue" id="sumHoldings">0</div></div>
+  </div>
+
+  <!-- ADD STOCK -->
+  <div class="card fi">
+    <div class="card-title">Add Stock to Portfolio</div>
+    <div class="add-section">
+      <input type="text" class="add-input" id="tickerInput" placeholder="Ticker — e.g. TCS.NS" oninput="previewAdd()">
+      <input type="number" class="add-input" id="buyPrice"   placeholder="Buy Price (₹)" style="max-width:160px">
+      <input type="number" class="add-input" id="qty"        placeholder="Quantity"       style="max-width:120px">
+      <button class="add-btn" onclick="addStock()">+ Add</button>
+    </div>
+    <div class="preview-box" id="addPreview">
+      <div class="pb-name" id="prevName">—</div>
+      <div class="pb-meta" id="prevSector">—</div>
+      <div class="pb-price" id="prevPrice">—</div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-row fi">
+    <div class="card">
+      <div class="card-title">Allocation</div>
+      <div style="height:200px;display:flex;align-items:center;justify-content:center">
+        <canvas id="allocChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Portfolio Value vs Invested</div>
+      <div style="height:200px"><canvas id="valChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="card fi">
+    <div class="card-title">Holdings Detail</div>
+    <div style="overflow-x:auto">
+      <table class="port-table">
+        <thead>
+          <tr>
+            <th>Stock</th>
+            <th>Buy Price</th>
+            <th>Current</th>
+            <th>Qty</th>
+            <th>Invested</th>
+            <th>Curr Value</th>
+            <th>P&L</th>
+            <th>Return %</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="portBody">
+          <tr class="loading-row"><td colspan="9">Loading portfolio…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div></div>
+
+<script>
+const STORAGE_KEY = 'ff_portfolio';
+const fmt = n => '₹' + Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtK = n => {
+  if(Math.abs(n)>=1e7) return '₹'+(n/1e7).toFixed(2)+'Cr';
+  if(Math.abs(n)>=1e5) return '₹'+(n/1e5).toFixed(2)+'L';
+  return fmt(n);
+};
+
+function getPortfolio(){ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }
+function savePortfolio(p){ localStorage.setItem(STORAGE_KEY,JSON.stringify(p)); }
+
+/* ── Preview ticker on input ── */
+let previewTimer;
+function previewAdd(){
+  clearTimeout(previewTimer);
+  const t = document.getElementById('tickerInput').value.trim().toUpperCase();
+  if(!t || t.length < 3){ document.getElementById('addPreview').style.display='none'; return; }
+  previewTimer = setTimeout(async ()=>{
+    try{
+      const r = await fetch('/api/financial-preview/'+t);
+      const d = await r.json();
+      if(d.ok){
+        document.getElementById('addPreview').style.display='block';
+        document.getElementById('prevName').textContent   = d.name;
+        document.getElementById('prevSector').textContent = d.sector+' · '+d.ticker;
+        document.getElementById('prevPrice').textContent  = fmt(d.price)+' (Live)';
+        document.getElementById('buyPrice').placeholder   = 'Buy Price (₹) — current: '+d.price;
+      }
+    }catch(e){}
+  }, 600);
+}
+
+/* ── Add stock ── */
+function addStock(){
+  const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
+  const bp     = parseFloat(document.getElementById('buyPrice').value);
+  const qty    = parseInt(document.getElementById('qty').value);
+  if(!ticker){ alert('Enter a ticker symbol.'); return; }
+  if(!bp||bp<=0){ alert('Enter a valid buy price.'); return; }
+  if(!qty||qty<=0){ alert('Enter a valid quantity.'); return; }
+
+  let p = getPortfolio();
+  const idx = p.findIndex(x=>x.ticker===ticker);
+  if(idx>=0){
+    // Average down: recalculate average buy price
+    const totalQty = p[idx].qty + qty;
+    const totalCost = p[idx].buyPrice * p[idx].qty + bp * qty;
+    p[idx].buyPrice = round2(totalCost / totalQty);
+    p[idx].qty = totalQty;
+  } else {
+    p.push({ ticker, buyPrice:bp, qty, addedAt:Date.now() });
+  }
+  savePortfolio(p);
+  document.getElementById('tickerInput').value = '';
+  document.getElementById('buyPrice').value    = '';
+  document.getElementById('qty').value         = '';
+  document.getElementById('addPreview').style.display = 'none';
+  loadPortfolio();
+}
+
+function round2(n){ return Math.round(n*100)/100; }
+
+/* ── Remove stock ── */
+function removeStock(ticker){
+  if(!confirm('Remove '+ticker+' from portfolio?')) return;
+  let p = getPortfolio().filter(x=>x.ticker!==ticker);
+  savePortfolio(p);
+  loadPortfolio();
+}
+
+/* ── Clear all ── */
+function clearPortfolio(){
+  if(!confirm('Clear entire portfolio? This cannot be undone.')) return;
+  savePortfolio([]);
+  loadPortfolio();
+}
+
+/* ── Export CSV ── */
+function exportCSV(){
+  const rows = [['Ticker','Buy Price','Qty','Current Price','Invested','Current Value','P&L','Return%']];
+  document.querySelectorAll('.port-row-data').forEach(r=>{
+    rows.push([r.dataset.ticker,r.dataset.bp,r.dataset.qty,r.dataset.cur,r.dataset.inv,r.dataset.val,r.dataset.pnl,r.dataset.ret]);
+  });
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = 'finflow_portfolio_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+/* ── Load & render portfolio ── */
+let allocChartObj, valChartObj;
+
+async function loadPortfolio(){
+  const p = getPortfolio();
+  const tbody = document.getElementById('portBody');
+
+  if(!p.length){
+    tbody.innerHTML = `<tr><td colspan="9">
+      <div class="empty-portfolio">
+        <div class="ep-icon">💼</div>
+        <div class="ep-title">Your portfolio is empty</div>
+        <div style="font-size:.78rem">Search for a stock above and add your holdings to get started.</div>
+      </div></td></tr>`;
+    updateSummary(0,0,0,[],[]);
+    return;
+  }
+
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="9">Loading live prices…</td></tr>';
+
+  // Fetch all live prices in parallel
+  const results = await Promise.all(p.map(async s => {
+    try{
+      const r = await fetch('/watchlist-data/'+s.ticker);
+      const d = await r.json();
+      return { ...s, livePrice: d.price||s.buyPrice, name: d.name||s.ticker.replace('.NS','') };
+    }catch(e){
+      return { ...s, livePrice: s.buyPrice, name: s.ticker.replace('.NS','') };
+    }
+  }));
+
+  let totalInvested=0, totalValue=0;
+  const labels=[], allocVals=[], colors=[];
+  const COLORS = ['#3b82f6','#06b6d4','#22c55e','#a855f7','#f59e0b','#ef4444','#8b5cf6','#10b981'];
+
+  tbody.innerHTML = results.map((s,i)=>{
+    const invested = round2(s.buyPrice * s.qty);
+    const value    = round2(s.livePrice * s.qty);
+    const pnl      = round2(value - invested);
+    const ret      = round2((pnl/invested)*100);
+    totalInvested += invested;
+    totalValue    += value;
+    labels.push(s.ticker.replace('.NS',''));
+    allocVals.push(value);
+    colors.push(COLORS[i % COLORS.length]);
+
+    const pnlClass = pnl>=0 ? 'pt-pnl-pos' : 'pt-pnl-neg';
+    const pnlSign  = pnl>=0 ? '+' : '';
+
+    return `<tr onclick="window.location.href='/stock/${s.ticker}'"
+               class="port-row-data"
+               data-ticker="${s.ticker}" data-bp="${s.buyPrice}" data-qty="${s.qty}"
+               data-cur="${s.livePrice}" data-inv="${invested}" data-val="${value}"
+               data-pnl="${pnl}" data-ret="${ret}">
+      <td>
+        <div class="pt-ticker">${s.ticker.replace('.NS','')}</div>
+        <div class="pt-name">${(s.name||'').slice(0,22)}</div>
+      </td>
+      <td class="pt-mono">${fmt(s.buyPrice)}</td>
+      <td class="pt-mono">${fmt(s.livePrice)}</td>
+      <td class="pt-mono">${s.qty}</td>
+      <td class="pt-mono">${fmtK(invested)}</td>
+      <td class="pt-mono">${fmtK(value)}</td>
+      <td class="${pnlClass}">${pnlSign}${fmtK(pnl)}</td>
+      <td class="${pnlClass}">${pnlSign}${ret}%</td>
+      <td onclick="event.stopPropagation()">
+        <button class="pt-remove" onclick="removeStock('${s.ticker}')">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  updateSummary(totalInvested, totalValue, results.length, labels, allocVals, colors);
+}
+
+function updateSummary(inv, val, count, labels, allocVals, colors){
+  const pnl = round2(val - inv);
+  const ret = inv > 0 ? round2((pnl/inv)*100) : 0;
+  const pos = pnl >= 0;
+
+  document.getElementById('sumInvested').textContent = fmtK(inv);
+  document.getElementById('sumValue').textContent    = fmtK(val);
+  document.getElementById('sumPnL').textContent      = (pos?'+':'')+fmtK(pnl);
+  document.getElementById('sumPnL').className        = 'sum-value '+(pos?'green':'red');
+  document.getElementById('sumPnLCard').className    = 'sum-card '+(pos?'pnl-pos':'pnl-neg');
+  document.getElementById('sumReturn').textContent   = (pos?'+':'')+ret+'%';
+  document.getElementById('sumReturn').className     = 'sum-value '+(pos?'green':'red');
+  document.getElementById('sumHoldings').textContent = count;
+
+  // Allocation pie
+  const ac = document.getElementById('allocChart');
+  if(allocChartObj) allocChartObj.destroy();
+  if(labels.length){
+    allocChartObj = new Chart(ac,{
+      type:'doughnut',
+      data:{labels,datasets:[{data:allocVals,backgroundColor:colors,borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11},boxWidth:12}},tooltip:{callbacks:{label:ctx=>' ₹'+fmtK(ctx.raw)}}}}
+    });
+  }
+
+  // Value vs Invested bar
+  const vc = document.getElementById('valChart');
+  if(valChartObj) valChartObj.destroy();
+  if(labels.length){
+    valChartObj = new Chart(vc,{
+      type:'bar',
+      data:{
+        labels,
+        datasets:[
+          {label:'Invested',data:allocVals.map((_,i)=>{const s2=getPortfolio()[i];return s2?round2(s2.buyPrice*s2.qty):0}),backgroundColor:'rgba(59,130,246,.55)',borderRadius:4},
+          {label:'Current Value',data:allocVals,backgroundColor:'rgba(34,197,94,.55)',borderRadius:4},
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}}},scales:{x:{grid:{color:'rgba(59,130,246,.03)'},ticks:{color:'#64748b',font:{size:9}}},y:{grid:{color:'rgba(59,130,246,.04)'},ticks:{color:'#64748b',font:{size:9},callback:v=>fmtK(v)}}}}
+    });
+  }
+}
+
+/* ── Init ── */
+loadPortfolio();
+
+/* Autocomplete on ticker input */
+let acTimer;
+document.getElementById('tickerInput').addEventListener('input', function(){
+  clearTimeout(acTimer);
+  previewAdd();
+});
+document.getElementById('tickerInput').addEventListener('keydown', e=>{
+  if(e.key==='Enter') document.getElementById('buyPrice').focus();
+});
+</script>
+</body></html>

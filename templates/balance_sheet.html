@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Balance Sheet — FinFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--bg:#060d1a;--bg-2:#0d1829;--bg-card:rgba(13,24,46,.75);--bg-hov:rgba(18,34,64,.9);--border:rgba(59,130,246,.13);--border-hov:rgba(59,130,246,.35);--blue:#3b82f6;--cyan:#06b6d4;--green:#22c55e;--green-bg:rgba(34,197,94,.12);--red:#ef4444;--red-bg:rgba(239,68,68,.12);--amber:#f59e0b;--amber-bg:rgba(245,158,11,.12);--text:#f1f5f9;--muted:#64748b;--soft:#94a3b8;--mono:'JetBrains Mono',monospace;--sans:'Sora','Segoe UI',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(59,130,246,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.025) 1px,transparent 1px);background-size:52px 52px}
+.z1{position:relative;z-index:1}
+.wrap{max-width:1100px;margin:0 auto;padding:32px 20px 70px}
+.page-hdr{margin-bottom:28px}.page-hdr a{color:var(--blue);text-decoration:none;font-size:.75rem}
+.page-hdr a:hover{text-decoration:underline}
+.page-title{font-size:1.5rem;font-weight:700;letter-spacing:-.4px;margin-top:6px}
+.page-sub{font-size:.78rem;color:var(--muted);margin-top:3px}
+.layout{display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start}
+@media(max-width:800px){.layout{grid-template-columns:1fr}}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:22px;backdrop-filter:blur(12px);margin-bottom:16px}
+.card-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:6px}
+.card-title::before{content:'';display:block;width:3px;height:12px;background:var(--blue);border-radius:2px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:.7rem;font-weight:600;color:var(--soft);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.field input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-family:var(--sans);font-size:.87rem;outline:none;transition:border-color .2s}
+.field input::placeholder{color:var(--muted)}
+.field input:focus{border-color:var(--blue)}
+.submit-btn{width:100%;background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;color:#fff;padding:12px;border-radius:10px;font-weight:700;font-size:.9rem;cursor:pointer;font-family:var(--sans);margin-top:6px;transition:opacity .15s}
+.submit-btn:hover{opacity:.88}
+.divider{height:1px;background:var(--border);margin:14px 0}
+/* Score badges */
+.score-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.score-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center}
+.score-num{font-family:var(--mono);font-size:1.6rem;font-weight:800;margin-bottom:4px}
+.score-lbl{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.score-bar{height:5px;background:rgba(255,255,255,.07);border-radius:3px;margin-top:8px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px;transition:width .6s ease}
+/* Verdict */
+.verdict-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.verdict-tag{border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:10px}
+.verdict-tag.strong{background:var(--green-bg);border:1px solid rgba(34,197,94,.25)}
+.verdict-tag.weak{background:var(--red-bg);border:1px solid rgba(239,68,68,.25)}
+.verdict-tag.moderate{background:var(--amber-bg);border:1px solid rgba(245,158,11,.25)}
+.vt-icon{font-size:1.4rem}
+.vt-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.vt-val{font-size:.92rem;font-weight:700}
+/* Statement table */
+.stmt-table{width:100%;border-collapse:collapse}
+.stmt-table tr{border-bottom:1px solid rgba(59,130,246,.07)}
+.stmt-table tr:last-child{border-bottom:none}
+.stmt-table td{padding:10px 4px;font-size:.82rem}
+.stmt-table td:first-child{color:var(--soft)}
+.stmt-table td:last-child{font-family:var(--mono);font-weight:600;text-align:right}
+.stmt-section{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);padding:10px 4px 4px;border-bottom:1px solid var(--border)}
+/* Trend charts */
+.trend-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:600px){.trend-grid{grid-template-columns:1fr}}
+.fi{animation:fadeUp .5s ease both}@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.flag{display:flex;align-items:flex-start;gap:8px;padding:9px 12px;border-radius:8px;font-size:.78rem;margin-bottom:7px}
+.flag.ok{background:var(--green-bg);color:var(--green)}
+.flag.warn{background:var(--amber-bg);color:var(--amber)}
+.flag.danger{background:var(--red-bg);color:var(--red)}
+</style>
+</head>
+<body><div class="z1">
+{% include 'navbar.html' %}
+<div class="wrap">
+  <div class="page-hdr fi">
+    <a href="/financials">← Financial Analysis</a>
+    <div class="page-title">🧾 Balance Sheet Analyser</div>
+    <div class="page-sub">Assets, liabilities, equity and liquidity analysis</div>
+  </div>
+
+  <div class="layout">
+    <!-- FORM -->
+    <div>
+      <div class="card fi">
+        <div class="card-title">Data Source</div>
+        <form method="POST">
+          <div class="field">
+            <label>Stock Ticker (auto-fetch)</label>
+            <input type="text" name="ticker" value="{{ ticker }}" placeholder="e.g. HDFCBANK.NS">
+          </div>
+          <div class="divider"></div>
+          <div style="font-size:.7rem;color:var(--muted);margin-bottom:10px">Or enter manually (₹ Crores)</div>
+          <div class="field"><label>Current Assets (Cr)</label><input type="number" name="current_assets" step="any" placeholder="e.g. 50000"></div>
+          <div class="field"><label>Non-Current Assets (Cr)</label><input type="number" name="non_current_assets" step="any" placeholder="e.g. 120000"></div>
+          <div class="field"><label>Current Liabilities (Cr)</label><input type="number" name="current_liabilities" step="any" placeholder="e.g. 30000"></div>
+          <div class="field"><label>Non-Current Liabilities (Cr)</label><input type="number" name="non_current_liabilities" step="any" placeholder="e.g. 80000"></div>
+          <div class="field"><label>Equity (Cr)</label><input type="number" name="equity" step="any" placeholder="e.g. 60000"></div>
+          <button type="submit" class="submit-btn">Analyse Balance Sheet →</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div>
+      {% if error %}
+      <div class="card fi" style="border-color:rgba(239,68,68,.3)"><div style="color:var(--red);font-size:.85rem">⚠️ {{ error }}</div></div>
+      {% endif %}
+
+      {% if result %}
+      <!-- Verdict tags -->
+      <div class="verdict-row fi">
+        <div class="verdict-tag {{ 'strong' if result.liquidity_tag=='Strong' else 'weak' if result.liquidity_tag=='Weak' else 'moderate' }}">
+          <div class="vt-icon">{{ '✅' if result.liquidity_tag=='Strong' else '⚠️' if result.liquidity_tag=='Weak' else '🟡' }}</div>
+          <div><div class="vt-label">Liquidity</div><div class="vt-val">{{ result.liquidity_tag }}</div></div>
+        </div>
+        <div class="verdict-tag {{ 'strong' if result.leverage_tag=='Low' else 'weak' if result.leverage_tag=='High' else 'moderate' }}">
+          <div class="vt-icon">{{ '✅' if result.leverage_tag=='Low' else '⚠️' if result.leverage_tag=='High' else '🟡' }}</div>
+          <div><div class="vt-label">Leverage</div><div class="vt-val">{{ result.leverage_tag }}</div></div>
+        </div>
+      </div>
+
+      <!-- Key ratios -->
+      <div class="score-row fi">
+        <div class="score-card">
+          <div class="score-num" style="color:{{ 'var(--green)' if (result.current_ratio or 0)>=2 else 'var(--amber)' if (result.current_ratio or 0)>=1.2 else 'var(--red)' }}">{{ result.current_ratio or '—' }}</div>
+          <div class="score-lbl">Current Ratio</div>
+          <div class="score-bar"><div class="score-fill" style="width:{{ [((result.current_ratio or 0)/3*100)|int, 100]|min }}%;background:{{ 'var(--green)' if (result.current_ratio or 0)>=2 else 'var(--amber)' if (result.current_ratio or 0)>=1.2 else 'var(--red)' }}"></div></div>
+        </div>
+        <div class="score-card">
+          <div class="score-num" style="color:{{ 'var(--green)' if (result.de_ratio or 0)<0.5 else 'var(--amber)' if (result.de_ratio or 0)<1.5 else 'var(--red)' }}">{{ result.de_ratio or '—' }}</div>
+          <div class="score-lbl">Debt / Equity</div>
+          <div class="score-bar"><div class="score-fill" style="width:{{ [((result.de_ratio or 0)/3*100)|int, 100]|min }}%;background:{{ 'var(--green)' if (result.de_ratio or 0)<0.5 else 'var(--amber)' if (result.de_ratio or 0)<1.5 else 'var(--red)' }}"></div></div>
+        </div>
+        <div class="score-card">
+          <div class="score-num" style="color:var(--blue)">{{ result.equity_ratio or '—' }}</div>
+          <div class="score-lbl">Equity Ratio</div>
+          <div class="score-bar"><div class="score-fill" style="width:{{ [((result.equity_ratio or 0)*100)|int, 100]|min }}%;background:var(--blue)"></div></div>
+        </div>
+      </div>
+
+      <!-- Statement -->
+      <div class="card fi">
+        <div class="card-title">Balance Sheet Summary</div>
+        <table class="stmt-table">
+          <tr class="stmt-section"><td colspan="2">ASSETS</td></tr>
+          <tr><td>Current Assets</td><td>₹{{ result.ca }} Cr</td></tr>
+          <tr><td>Non-Current Assets</td><td>₹{{ result.nca }} Cr</td></tr>
+          <tr style="font-weight:700;border-top:1px solid var(--border)"><td>Total Assets</td><td style="color:var(--blue)">₹{{ result.total_assets }} Cr</td></tr>
+          <tr class="stmt-section"><td colspan="2">LIABILITIES</td></tr>
+          <tr><td>Current Liabilities</td><td>₹{{ result.cl }} Cr</td></tr>
+          <tr><td>Non-Current Liabilities</td><td>₹{{ result.ncl }} Cr</td></tr>
+          <tr style="font-weight:700;border-top:1px solid var(--border)"><td>Total Liabilities</td><td style="color:var(--red)">₹{{ result.total_liab }} Cr</td></tr>
+          <tr class="stmt-section"><td colspan="2">EQUITY</td></tr>
+          <tr style="font-weight:700"><td>Shareholders' Equity</td><td style="color:var(--green)">₹{{ result.equity }} Cr</td></tr>
+          <tr style="border-top:1px solid var(--border);opacity:.6"><td>Balance Check</td><td>{{ '✅ Balanced' if result.balanced else '⚠️ Unbalanced' }}</td></tr>
+        </table>
+      </div>
+
+      <!-- Chart -->
+      <div class="card fi">
+        <div class="card-title">Composition</div>
+        <div style="height:200px"><canvas id="bsChart"></canvas></div>
+      </div>
+
+      {% if fin_data and fin_data.ok and fin_data.balance.total_assets|length > 1 %}
+      <!-- Trend charts -->
+      <div class="trend-grid fi">
+        <div class="card">
+          <div class="card-title">Total Assets Trend</div>
+          <div style="height:150px"><canvas id="taChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Equity Trend</div>
+          <div style="height:150px"><canvas id="eqChart"></canvas></div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Flags -->
+      {% if fin_data and fin_data.ok %}
+      <div class="fi">
+        {% for f in fin_data.flags %}
+        <div class="flag {{ f.type }}">{{ '✅' if f.type=='ok' else '⚠️' if f.type=='warn' else '🚨' }} {{ f.msg }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% else %}
+      <div class="card fi" style="text-align:center;padding:40px;color:var(--muted)">
+        <div style="font-size:2.5rem;margin-bottom:12px">🧾</div>
+        <div style="font-size:.88rem">Enter a ticker or values and click<br><strong style="color:var(--text)">Analyse Balance Sheet</strong></div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div></div>
+
+{% if result %}
+<script>
+const bsCtx = document.getElementById('bsChart');
+new Chart(bsCtx,{type:'bar',data:{labels:['Current Assets','Non-Current Assets','Current Liab','Non-Current Liab','Equity'],datasets:[{data:[{{ result.ca }},{{ result.nca }},{{ result.cl }},{{ result.ncl }},{{ result.equity }}],backgroundColor:['rgba(59,130,246,.7)','rgba(6,182,212,.7)','rgba(239,68,68,.65)','rgba(239,68,68,.4)','rgba(34,197,94,.7)'],borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'₹'+ctx.raw+' Cr'}}},scales:{x:{grid:{color:'rgba(59,130,246,.04)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(59,130,246,.04)'},ticks:{color:'#64748b',font:{size:10},callback:v=>v+'Cr'}}}}});
+
+{% if fin_data and fin_data.ok %}
+const yrs = {{ fin_data.years | tojson }};
+const ta  = {{ fin_data.balance.total_assets | tojson }};
+const eq  = {{ fin_data.balance.equity | tojson }};
+const mkLine = (id,data,color,label)=>{
+  const el=document.getElementById(id);if(!el)return;
+  new Chart(el,{type:'line',data:{labels:yrs.slice().reverse(),datasets:[{label,data:data.slice().reverse(),borderColor:color,borderWidth:2,pointRadius:3,fill:true,tension:.35,backgroundColor:color.replace(')',', 0.1)').replace('rgb','rgba')}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(59,130,246,.03)'},ticks:{color:'#64748b',font:{size:9}}},y:{grid:{color:'rgba(59,130,246,.04)'},ticks:{color:'#64748b',font:{size:9},callback:v=>v+'Cr'}}}}});
+};
+mkLine('taChart',ta,'rgb(59,130,246)','Total Assets');
+mkLine('eqChart',eq,'rgb(34,197,94)','Equity');
+{% endif %}
+</script>
+{% endif %}
+</body></html>

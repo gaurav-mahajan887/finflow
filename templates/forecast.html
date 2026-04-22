@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Price Forecast — FinFlow Quant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--bg:#060d1a;--bg-2:#0d1829;--bg-card:rgba(13,24,46,.75);--border:rgba(59,130,246,.13);--border-hov:rgba(59,130,246,.35);--blue:#3b82f6;--cyan:#06b6d4;--green:#22c55e;--green-bg:rgba(34,197,94,.12);--red:#ef4444;--red-bg:rgba(239,68,68,.12);--amber:#f59e0b;--purple:#a855f7;--text:#f1f5f9;--muted:#64748b;--soft:#94a3b8;--mono:'JetBrains Mono',monospace;--sans:'Sora','Segoe UI',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(59,130,246,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.022) 1px,transparent 1px);background-size:52px 52px}
+.z1{position:relative;z-index:1}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 20px 80px}
+.page-hdr{margin-bottom:28px}.page-hdr a{color:var(--blue);text-decoration:none;font-size:.75rem}
+.page-title{font-size:1.5rem;font-weight:800;letter-spacing:-.4px;margin-top:6px}
+.page-sub{font-size:.78rem;color:var(--muted);margin-top:3px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:22px;margin-bottom:16px}
+.card-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:6px}
+.card-title::before{content:'';display:block;width:3px;height:12px;background:var(--cyan);border-radius:2px}
+.form-row{display:flex;gap:10px;flex-wrap:wrap}
+.qw-input{flex:1;min-width:200px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:var(--sans);font-size:.88rem;outline:none;transition:border-color .2s}
+.qw-input::placeholder{color:var(--muted)}
+.qw-input:focus{border-color:var(--cyan)}
+.qw-select{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:var(--sans);font-size:.88rem;outline:none;cursor:pointer}
+.qw-select option{background:var(--bg-2)}
+.run-btn{background:linear-gradient(135deg,var(--cyan),#0284c7);border:none;color:#fff;padding:10px 22px;border-radius:10px;font-weight:700;font-size:.88rem;cursor:pointer;font-family:var(--sans);transition:opacity .15s;white-space:nowrap}
+.run-btn:hover{opacity:.88}
+
+/* TARGET CARDS */
+.target-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px}
+.tcard{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.tcard-val{font-family:var(--mono);font-size:1.05rem;font-weight:800;margin-bottom:2px}
+.tcard-lbl{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.tcard-chg{font-size:.7rem;font-family:var(--mono);margin-top:3px}
+.pos{color:var(--green)}.neg{color:var(--red)}
+
+/* Disclaimer */
+.disclaimer{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:12px 16px;font-size:.75rem;color:var(--amber);margin-top:14px;line-height:1.6}
+
+/* Insight */
+.insight-para{font-size:.8rem;color:var(--soft);line-height:1.65;margin-bottom:8px;padding:8px 12px;background:rgba(6,182,212,.05);border-radius:8px;border-left:3px solid var(--cyan)}
+
+.loader{text-align:center;padding:32px;color:var(--muted);display:none}
+.spinner{width:28px;height:28px;border:2px solid rgba(6,182,212,.25);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fi{animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body><div class="z1">
+{% include 'navbar.html' %}
+<div class="wrap">
+  <div class="page-hdr fi">
+    <a href="/quant">← Quant Hub</a>
+    <div class="page-title">🔮 Price Forecast</div>
+    <div class="page-sub">7–30 day price projections using Moving Averages, EMA and ARIMA time-series modelling</div>
+  </div>
+
+  <div class="card fi">
+    <div class="card-title">Forecast Settings</div>
+    <div class="form-row">
+      <input class="qw-input" id="fTicker" placeholder="Ticker — e.g. TCS.NS" style="max-width:240px">
+      <select class="qw-select" id="fDays">
+        <option value="7">7 Days</option>
+        <option value="14">14 Days</option>
+        <option value="30" selected>30 Days</option>
+      </select>
+      <button class="run-btn" onclick="runForecast()">🔮 Generate Forecast</button>
+    </div>
+  </div>
+
+  <div class="loader" id="loader"><div class="spinner"></div>Computing forecast models…</div>
+
+  <div id="results" style="display:none">
+    <div class="card fi">
+      <div class="card-title">Price Targets</div>
+      <div class="target-grid" id="targetGrid"></div>
+    </div>
+    <div class="card fi">
+      <div class="card-title">Forecast Chart</div>
+      <div style="height:340px"><canvas id="forecastChart"></canvas></div>
+    </div>
+    <div class="card fi" id="insightCard">
+      <div class="card-title">📊 Forecast Insight</div>
+      <div id="insightContent"></div>
+    </div>
+    <div class="disclaimer">
+      ⚠️ These are statistical projections, not financial advice. Forecasts assume historical patterns continue and cannot account for news, macro events or earnings surprises. Use in combination with fundamental analysis.
+    </div>
+  </div>
+
+</div></div>
+
+<script>
+let fcChart;
+
+async function runForecast(){
+  const ticker = document.getElementById('fTicker').value.trim().toUpperCase();
+  const days   = document.getElementById('fDays').value;
+  if(!ticker){ alert('Enter a ticker.'); return; }
+  if(!ticker.includes('.')) { alert('Add exchange suffix — e.g. RELIANCE.NS'); return; }
+
+  document.getElementById('loader').style.display  = 'block';
+  document.getElementById('results').style.display = 'none';
+
+  try{
+    const [fcRes, insRes] = await Promise.all([
+      fetch(`/api/quant/forecast/${ticker}?days=${days}`).then(r=>r.json()),
+      fetch(`/api/quant/insights/forecast/${ticker}?days=${days}`).then(r=>r.json()),
+    ]);
+
+    if(!fcRes.ok) throw new Error(fcRes.error);
+
+    const d     = fcRes;
+    const last  = d.last_price;
+
+    const fmtTarget = (val, label, model) => {
+      if(!val) return '';
+      const chg = ((val-last)/last*100).toFixed(2);
+      const pos = parseFloat(chg) >= 0;
+      return `<div class="tcard">
+        <div class="tcard-val" style="color:${pos?'var(--green)':'var(--red)'}">₹${parseFloat(val).toFixed(2)}</div>
+        <div class="tcard-lbl">${label} (${model})</div>
+        <div class="tcard-chg ${pos?'pos':'neg'}">${pos?'▲ +':'▼ '}${Math.abs(chg)}%</div>
+      </div>`;
+    };
+
+    const tg = d.targets;
+    document.getElementById('targetGrid').innerHTML = [
+      `<div class="tcard"><div class="tcard-val" style="color:var(--blue)">₹${last}</div><div class="tcard-lbl">Current Price</div><div class="tcard-chg" style="color:var(--muted)">${d.last_date}</div></div>`,
+      fmtTarget(tg['7d_sma'],  '7-Day',  'SMA'),
+      fmtTarget(tg['14d_sma'], '14-Day', 'SMA'),
+      fmtTarget(tg['30d_sma'], '30-Day', 'SMA'),
+      tg['7d_arima']  ? fmtTarget(tg['7d_arima'],  '7-Day',  'ARIMA') : '',
+      tg['30d_arima'] ? fmtTarget(tg['30d_arima'], '30-Day', 'ARIMA') : '',
+    ].join('');
+
+    // Chart
+    if(fcChart) fcChart.destroy();
+
+    const histLen = d.hist_dates.length;
+    const allLabels = [...d.hist_dates, ...d.future_dates];
+    const pad = new Array(histLen).fill(null);
+
+    const datasets = [
+      {
+        label:'Historical', data:[...d.hist_values,...new Array(d.future_dates.length).fill(null)],
+        borderColor:'#3b82f6', borderWidth:2, pointRadius:0, tension:.3, fill:false
+      },
+      {
+        label:'SMA Forecast', data:[...pad, ...d.sma_forecast],
+        borderColor:'#22c55e', borderWidth:2, borderDash:[6,3], pointRadius:0, tension:.3, fill:false
+      },
+      {
+        label:'EMA Forecast', data:[...pad, ...d.ema_forecast],
+        borderColor:'#f59e0b', borderWidth:2, borderDash:[4,4], pointRadius:0, tension:.3, fill:false
+      },
+    ];
+
+    if(d.arima_forecast){
+      datasets.push({
+        label:'ARIMA Forecast', data:[...pad, ...d.arima_forecast],
+        borderColor:'#a855f7', borderWidth:2, borderDash:[8,3], pointRadius:0, tension:.2, fill:false
+      });
+    }
+
+    // Confidence band
+    datasets.push({
+      label:'Upper Band', data:[...pad,...d.upper_band],
+      borderColor:'rgba(34,197,94,.25)', borderWidth:1, pointRadius:0, fill:'+1',
+      backgroundColor:'rgba(34,197,94,.05)', tension:.3
+    });
+    datasets.push({
+      label:'Lower Band', data:[...pad,...d.lower_band],
+      borderColor:'rgba(34,197,94,.25)', borderWidth:1, pointRadius:0, fill:false, tension:.3
+    });
+
+    fcChart = new Chart(document.getElementById('forecastChart'),{
+      type:'line',
+      data:{labels:allLabels, datasets},
+      options:{
+        responsive:true, maintainAspectRatio:false, animation:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{labels:{color:'#94a3b8',font:{size:10},boxWidth:20}},
+          tooltip:{backgroundColor:'rgba(13,24,46,.95)',titleColor:'#94a3b8',bodyColor:'#f1f5f9',
+                   bodyFont:{family:"'JetBrains Mono',monospace"},
+                   callbacks:{label:ctx=>' ₹'+(ctx.raw!==null?Number(ctx.raw).toFixed(2):'—')}}
+        },
+        scales:{
+          x:{ticks:{maxTicksLimit:10,color:'#64748b',font:{size:9}},grid:{color:'rgba(59,130,246,.04)'}},
+          y:{position:'right',ticks:{color:'#64748b',font:{family:"'JetBrains Mono',monospace",size:9},callback:v=>'₹'+v},grid:{color:'rgba(59,130,246,.04)'}}
+        }
+      }
+    });
+
+    // Insight
+    if(insRes.ok){
+      document.getElementById('insightContent').innerHTML =
+        insRes.paragraphs.map(p=>`<div class="insight-para">${p}</div>`).join('');
+    }
+
+    document.getElementById('results').style.display = 'block';
+  }catch(e){
+    alert('Error: '+e.message);
+  }finally{
+    document.getElementById('loader').style.display = 'none';
+  }
+}
+
+document.getElementById('fTicker').addEventListener('keydown',e=>{
+  if(e.key==='Enter') runForecast();
+});
+</script>
+</body></html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Market News — FinFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+:root{--bg:#060d1a;--bg-2:#0d1829;--bg-card:rgba(13,24,46,.75);--bg-hov:rgba(18,34,64,.9);--border:rgba(59,130,246,.13);--border-hov:rgba(59,130,246,.35);--blue:#3b82f6;--cyan:#06b6d4;--green:#22c55e;--text:#f1f5f9;--muted:#64748b;--soft:#94a3b8;--mono:'JetBrains Mono',monospace;--sans:'Sora','Segoe UI',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(59,130,246,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.022) 1px,transparent 1px);background-size:52px 52px}
+.z1{position:relative;z-index:1}
+.wrap{max-width:1180px;margin:0 auto;padding:32px 20px 70px}
+
+/* Header */
+.page-hdr{margin-bottom:32px}
+.page-hdr a{color:var(--blue);text-decoration:none;font-size:.75rem}
+.page-hdr a:hover{text-decoration:underline}
+.page-title{font-size:1.6rem;font-weight:800;letter-spacing:-.5px;margin-top:8px}
+.page-sub{font-size:.8rem;color:var(--muted);margin-top:4px}
+
+/* Live badge */
+.live-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:#86efac;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:30px;margin-bottom:16px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 7px #22c55e;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* News grid */
+.news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+
+/* News card */
+.news-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:all .22s;text-decoration:none;color:var(--text);display:flex;flex-direction:column}
+.news-card:hover{border-color:var(--border-hov);transform:translateY(-4px);box-shadow:0 12px 36px rgba(0,0,0,.45);color:var(--text);text-decoration:none}
+.news-thumb{height:160px;background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(6,182,212,.1));position:relative;overflow:hidden;flex-shrink:0}
+.news-thumb img{width:100%;height:100%;object-fit:cover;opacity:.85}
+.news-thumb-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.5rem}
+.news-source-badge{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);border-radius:6px;padding:3px 8px;font-size:.65rem;font-weight:700;color:#e2e8f0;letter-spacing:.04em}
+.news-body{padding:16px;display:flex;flex-direction:column;gap:8px;flex:1}
+.news-title{font-size:.88rem;font-weight:700;color:#f1f5f9;line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.news-footer{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:8px;border-top:1px solid rgba(59,130,246,.08)}
+.news-source{font-size:.68rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.news-time{font-size:.66rem;color:var(--muted);font-family:var(--mono)}
+.news-link-icon{font-size:.75rem;color:var(--blue);opacity:0;transition:opacity .18s}
+.news-card:hover .news-link-icon{opacity:1}
+
+/* Skeleton */
+.news-skeleton{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;height:280px;overflow:hidden;position:relative}
+.news-skeleton::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 25%,rgba(59,130,246,.05) 50%,transparent 75%);background-size:200% 100%;animation:shimmer 1.5s infinite}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* Empty state */
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-icon{font-size:3rem;margin-bottom:14px}
+
+/* Category filters */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.filter-btn{background:var(--bg-card);border:1px solid var(--border);color:var(--soft);padding:6px 15px;border-radius:30px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .18s}
+.filter-btn:hover,.filter-btn.active{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.35);color:#60a5fa}
+
+.fi{animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body><div class="z1">
+{% include 'navbar.html' %}
+<div class="wrap">
+
+  <div class="page-hdr fi">
+    <a href="/">← Home</a>
+    <div class="live-badge"><span class="live-dot"></span>Live Feed</div>
+    <div class="page-title">📰 Market News</div>
+    <div class="page-sub">Latest headlines from Indian equity markets — sourced via Yahoo Finance</div>
+  </div>
+
+  <!-- Filter buttons (client-side only) -->
+  <div class="filter-row fi">
+    <button class="filter-btn active" onclick="filterNews('all', this)">All News</button>
+    <button class="filter-btn" onclick="filterNews('market', this)">Market</button>
+    <button class="filter-btn" onclick="filterNews('results', this)">Results</button>
+    <button class="filter-btn" onclick="filterNews('rbi', this)">RBI/Economy</button>
+  </div>
+
+  {% if articles %}
+  <div class="news-grid fi" id="newsGrid">
+    {% for article in articles %}
+    <a class="news-card" href="{{ article.url }}" target="_blank" rel="noopener"
+       data-title="{{ article.title | lower }}">
+      <div class="news-thumb">
+        {% if article.thumbnail %}
+        <img src="{{ article.thumbnail }}" alt="" loading="lazy">
+        {% else %}
+        <div class="news-thumb-placeholder">📰</div>
+        {% endif %}
+        <div class="news-source-badge">{{ article.source[:18] }}</div>
+      </div>
+      <div class="news-body">
+        <div class="news-title">{{ article.title }}</div>
+        <div class="news-footer">
+          <span class="news-source">{{ article.source }}</span>
+          {% if article.time %}
+          <span class="news-time" data-ts="{{ article.time }}">—</span>
+          {% endif %}
+          <span class="news-link-icon">↗</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty-state fi">
+    <div class="empty-icon">📰</div>
+    <div style="font-size:.9rem;margin-bottom:8px;color:#f1f5f9">No news available right now</div>
+    <div style="font-size:.78rem">Market news is fetched live — please try refreshing in a moment.</div>
+  </div>
+  {% endif %}
+
+</div></div>
+
+<script>
+/* Relative timestamps */
+document.querySelectorAll('[data-ts]').forEach(el => {
+  const ts = parseInt(el.dataset.ts);
+  if(!ts) return;
+  const diff = Math.floor((Date.now()/1000) - ts);
+  if(diff < 3600)      el.textContent = Math.floor(diff/60) + 'm ago';
+  else if(diff < 86400) el.textContent = Math.floor(diff/3600) + 'h ago';
+  else                  el.textContent = Math.floor(diff/86400) + 'd ago';
+});
+
+/* Client-side filter */
+function filterNews(cat, btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const cards = document.querySelectorAll('.news-card');
+  const kw = {
+    all:     null,
+    market:  ['nifty','sensex','market','nse','bse','stock'],
+    results: ['result','earnings','profit','revenue','quarterly'],
+    rbi:     ['rbi','repo','rate','inflation','gdp','economy'],
+  }[cat];
+  cards.forEach(c => {
+    if(!kw){ c.style.display=''; return; }
+    const title = c.dataset.title || '';
+    c.style.display = kw.some(k=>title.includes(k)) ? '' : 'none';
+  });
+}
+</script>
+</body></html>

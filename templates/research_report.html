@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Research Report{% if data %} — {{ data.company.name }}{% endif %} — FinFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--bg:#060d1a;--bg-2:#0d1829;--bg-card:rgba(13,24,46,.75);--border:rgba(59,130,246,.13);--border-hov:rgba(59,130,246,.35);--blue:#3b82f6;--cyan:#06b6d4;--green:#22c55e;--green-bg:rgba(34,197,94,.12);--red:#ef4444;--red-bg:rgba(239,68,68,.12);--amber:#f59e0b;--amber-bg:rgba(245,158,11,.12);--purple:#a855f7;--purple-bg:rgba(168,85,247,.12);--text:#f1f5f9;--muted:#64748b;--soft:#94a3b8;--mono:'JetBrains Mono',monospace;--sans:'Sora','Segoe UI',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(59,130,246,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.025) 1px,transparent 1px);background-size:52px 52px}
+.z1{position:relative;z-index:1}
+.wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
+.page-hdr{margin-bottom:24px}.page-hdr a{color:var(--blue);text-decoration:none;font-size:.75rem}
+.page-title{font-size:1.5rem;font-weight:700;letter-spacing:-.4px;margin-top:6px}
+/* FORM STATE */
+.form-card{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:28px;max-width:520px;margin:40px auto;backdrop-filter:blur(12px);text-align:center}
+.fc-icon{font-size:2.5rem;margin-bottom:12px}
+.fc-title{font-size:1.1rem;font-weight:700;margin-bottom:6px}
+.fc-sub{font-size:.8rem;color:var(--muted);margin-bottom:20px}
+.fc-row{display:flex;gap:10px}
+.fc-input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:var(--sans);font-size:.9rem;outline:none;transition:border-color .2s}
+.fc-input::placeholder{color:var(--muted)}
+.fc-input:focus{border-color:var(--blue)}
+.fc-btn{background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;color:#fff;padding:11px 22px;border-radius:10px;font-weight:700;font-size:.88rem;cursor:pointer;font-family:var(--sans)}
+.fc-btn:hover{opacity:.88}
+/* REPORT HEADER */
+.report-header{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:26px 28px;margin-bottom:18px;backdrop-filter:blur(12px)}
+.rh-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:18px}
+.rh-ticker{font-size:.68rem;font-weight:700;color:var(--blue);font-family:var(--mono);letter-spacing:.08em;margin-bottom:4px}
+.rh-name{font-size:1.4rem;font-weight:800;letter-spacing:-.4px;margin-bottom:6px}
+.rh-meta{display:flex;flex-wrap:wrap;gap:7px}
+.rh-pill{font-size:.68rem;color:var(--soft);background:rgba(255,255,255,.05);border:1px solid var(--border);padding:3px 10px;border-radius:30px}
+.rh-price{text-align:right}
+.rh-price-val{font-family:var(--mono);font-size:1.7rem;font-weight:700;letter-spacing:-1px}
+.rh-price-lbl{font-size:.68rem;color:var(--muted)}
+/* VERDICT */
+.verdict-banner{border-radius:14px;padding:20px 24px;margin-bottom:18px;display:flex;align-items:center;gap:18px}
+.verdict-banner.green{background:var(--green-bg);border:1px solid rgba(34,197,94,.3)}
+.verdict-banner.red{background:var(--red-bg);border:1px solid rgba(239,68,68,.3)}
+.verdict-banner.amber{background:var(--amber-bg);border:1px solid rgba(245,158,11,.3)}
+.verdict-banner.muted{background:rgba(100,116,139,.08);border:1px solid rgba(100,116,139,.2)}
+.vb-icon{font-size:2.2rem;flex-shrink:0}
+.vb-tag{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+.vb-tag.green{color:var(--green)}.vb-tag.red{color:var(--red)}.vb-tag.amber{color:var(--amber)}
+.vb-title{font-size:1.1rem;font-weight:700;margin-bottom:3px}
+.vb-text{font-size:.8rem;color:var(--soft);line-height:1.5}
+/* SCORE STRIP */
+.score-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px}
+@media(max-width:600px){.score-strip{grid-template-columns:repeat(3,1fr)}}
+.ss-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px 10px;text-align:center}
+.ss-num{font-family:var(--mono);font-size:1.55rem;font-weight:800;line-height:1;margin-bottom:3px}
+.ss-lbl{font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+.ss-bar{height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.ss-fill{height:100%;border-radius:2px}
+/* SECTION */
+.rpt-section{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:14px;backdrop-filter:blur(10px)}
+.rpt-section-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:7px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.rpt-section-title::before{content:'';display:block;width:3px;height:14px;background:var(--blue);border-radius:2px}
+/* METRICS TABLE */
+.m2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.m3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.m4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:600px){.m4{grid-template-columns:1fr 1fr}.m3{grid-template-columns:1fr 1fr}}
+.mcard{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:13px}
+.mcard-val{font-family:var(--mono);font-size:1rem;font-weight:700;margin-bottom:3px}
+.mcard-lbl{font-size:.62rem;color:var(--muted)}
+/* STMT TABLE */
+.stmt{width:100%;border-collapse:collapse}
+.stmt tr{border-bottom:1px solid rgba(59,130,246,.07)}
+.stmt tr:last-child{border-bottom:none}
+.stmt td{padding:9px 4px;font-size:.81rem}
+.stmt td:first-child{color:var(--soft)}
+.stmt td:last-child{font-family:var(--mono);font-weight:600;text-align:right}
+.stmt-hdr td{font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);padding:9px 4px 5px;border-bottom:1px solid var(--border)}
+/* CHARTS */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:600px){.chart-grid{grid-template-columns:1fr}}
+/* INSIGHTS + FLAGS */
+.insight{display:flex;align-items:flex-start;gap:9px;padding:9px 12px;border-radius:8px;font-size:.79rem;margin-bottom:7px;line-height:1.5}
+.insight.ok{background:var(--green-bg)}.insight.warn{background:var(--amber-bg)}.insight.bad{background:var(--red-bg)}
+.flag{display:flex;align-items:flex-start;gap:8px;padding:9px 12px;border-radius:8px;font-size:.78rem;margin-bottom:7px}
+.flag.ok{background:var(--green-bg);color:var(--green)}.flag.warn{background:var(--amber-bg);color:var(--amber)}.flag.danger{background:var(--red-bg);color:var(--red)}
+/* DCF TABLE */
+.dcf-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(59,130,246,.06);font-size:.81rem}
+.dcf-row:last-child{border-bottom:none;font-weight:700;padding-top:12px}
+.dcf-lbl{color:var(--soft)}.dcf-val{font-family:var(--mono);font-weight:600}
+/* WACC */
+.wacc-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+/* PRINT */
+@media print{body{background:white;color:#111}.rpt-section{background:white;border:1px solid #e5e7eb}.verdict-banner{background:#f0fdf4 !important}}
+.fi{animation:fadeUp .5s ease both}@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.print-btn{background:none;border:1px solid var(--border);color:var(--soft);padding:7px 16px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .18s}
+.print-btn:hover{border-color:var(--border-hov);color:var(--text)}
+</style>
+</head>
+<body><div class="z1">
+{% include 'navbar.html' %}
+<div class="wrap">
+
+  <div class="page-hdr fi">
+    <a href="/financials">← Financial Analysis</a>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:6px">
+      <div>
+        <div class="page-title">📑 Equity Research Report</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:3px">Automated deep-dive: DCF · Ratios · Risk · Verdict</div>
+      </div>
+      {% if data %}<button class="print-btn" onclick="window.print()">🖨 Print / Save PDF</button>{% endif %}
+    </div>
+  </div>
+
+  {% if not data and not error %}
+  <!-- INPUT FORM -->
+  <div class="form-card fi">
+    <div class="fc-icon">📑</div>
+    <div class="fc-title">Generate Research Report</div>
+    <div class="fc-sub">Enter any NSE ticker to get a full automated equity research report including DCF, ratios, risk flags and a final verdict.</div>
+    <form method="POST">
+      <div class="fc-row">
+        <input type="text" name="ticker" class="fc-input" placeholder="e.g. RELIANCE.NS, TCS.NS" required>
+        <button type="submit" class="fc-btn">Generate →</button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if error %}
+  <div class="rpt-section fi" style="border-color:rgba(239,68,68,.3)">
+    <div style="color:var(--red)">⚠️ {{ error }}</div>
+    <form method="POST" style="margin-top:14px;display:flex;gap:10px">
+      <input type="text" name="ticker" value="{{ ticker }}" class="fc-input" placeholder="Try again…">
+      <button type="submit" class="fc-btn" style="flex-shrink:0">Retry</button>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if data %}
+  {% set c = data.company %}
+  {% set b = data.balance %}
+  {% set i = data.income %}
+  {% set cf = data.cashflow %}
+  {% set r = data.ratios %}
+  {% set s = data.scores %}
+  {% set v = data.verdict %}
+  {% set dcf = data.dcf %}
+  {% set w = data.wacc %}
+
+  <!-- REPORT HEADER -->
+  <div class="report-header fi">
+    <div class="rh-top">
+      <div>
+        <div class="rh-ticker">{{ c.ticker }} · NSE</div>
+        <div class="rh-name">{{ c.name }}</div>
+        <div class="rh-meta">
+          {% if c.sector != 'N/A' %}<span class="rh-pill">{{ c.sector }}</span>{% endif %}
+          {% if c.industry != 'N/A' %}<span class="rh-pill">{{ c.industry }}</span>{% endif %}
+          {% if c.employees %}<span class="rh-pill">{{ "{:,}".format(c.employees) }} employees</span>{% endif %}
+        </div>
+      </div>
+      <div class="rh-price">
+        <div class="rh-price-val">₹{{ c.price }}</div>
+        <div class="rh-price-lbl">Current Market Price</div>
+      </div>
+    </div>
+    {% if c.description %}
+    <div style="font-size:.8rem;color:var(--soft);line-height:1.65;border-top:1px solid var(--border);padding-top:14px">{{ c.description }}</div>
+    {% endif %}
+  </div>
+
+  <!-- VERDICT -->
+  <div class="verdict-banner {{ v.color }} fi">
+    <div class="vb-icon">{{ '🟢' if v.color=='green' else '🔴' if v.color=='red' else '🟡' if v.color=='amber' else '⚪' }}</div>
+    <div>
+      <div class="vb-tag {{ v.color }}">{{ v.tag }}</div>
+      <div class="vb-title">Final Verdict{% if v.upside %}: {{ v.upside }}% {{ 'Upside' if v.upside > 0 else 'Downside' }}{% endif %}</div>
+      <div class="vb-text">{{ v.text }}</div>
+    </div>
+  </div>
+
+  <!-- SCORES -->
+  <div class="score-strip fi">
+    {% for lbl,key in [('Overall','overall'),('Health','health'),('Profit','profit'),('Risk','risk'),('Value','valuation')] %}
+    {% set val = s[key] %}
+    <div class="ss-card">
+      <div class="ss-lbl">{{ lbl }}</div>
+      <div class="ss-num" style="color:{{ 'var(--green)' if val>=7 else 'var(--amber)' if val>=5 else 'var(--red)' }}">{{ val }}</div>
+      <div style="font-size:.58rem;color:var(--muted);margin-bottom:6px">/10</div>
+      <div class="ss-bar"><div class="ss-fill" style="width:{{ val*10 }}%;background:{{ 'var(--green)' if val>=7 else 'var(--amber)' if val>=5 else 'var(--red)' }}"></div></div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- 1. COMPANY OVERVIEW -->
+  <div class="rpt-section fi">
+    <div class="rpt-section-title">1. Company Overview</div>
+    <div class="m4">
+      <div class="mcard"><div class="mcard-val">{{ c.market_cap or '—' }}</div><div class="mcard-lbl">Market Cap</div></div>
+      <div class="mcard"><div class="mcard-val">₹{{ c.price }}</div><div class="mcard-lbl">CMP</div></div>
+      <div class="mcard"><div class="mcard-val">₹{{ c.high_52 }}</div><div class="mcard-lbl">52W High</div></div>
+      <div class="mcard"><div class="mcard-val">₹{{ c.low_52 }}</div><div class="mcard-lbl">52W Low</div></div>
+    </div>
+  </div>
+
+  <!-- 2. BALANCE SHEET SUMMARY -->
+  <div class="rpt-section fi">
+    <div class="rpt-section-title">2. Balance Sheet Summary</div>
+    <div class="m4" style="margin-bottom:14px">
+      <div class="mcard"><div class="mcard-val">₹{{ b.ta_0 or '—' }} Cr</div><div class="mcard-lbl">Total Assets</div></div>
+      <div class="mcard"><div class="mcard-val" style="color:var(--red)">₹{{ b.tl_0 or '—' }} Cr</div><div class="mcard-lbl">Total Liabilities</div></div>
+      <div class="mcard"><div class="mcard-val" style="color:var(--green)">₹{{ b.eq_0 or '—' }} Cr</div><div class="mcard-lbl">Equity</div></div>
+      <div class="mcard"><div class="mcard-val">₹{{ b.cash_0 or '—' }} Cr</div><div class="mcard-lbl">Cash</div></div>
+    </div>
+    {% if data.years %}
+    <div class="chart-grid">
+      <div><div style="font-size:.68rem;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.07em">Total Assets Trend (₹ Cr)</div><div style="height:160px"><canvas id="ta_chart"></canvas></div></div>
+      <div><div style="font-size:.68rem;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.07em">Equity Trend (₹ Cr)</div><div style="height:160px"><canvas id="eq_chart"></canvas></div></div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- 3. INCOME STATEMENT -->
+  <div class="rpt-section fi">
+    <div class="rpt-section-title">3. Profit & Income Statement</div>
+    <div class="m3" style="margin-bottom:14px">
+      <div class="mcard"><div class="mcard-val" style="color:var(--blue)">₹{{ i.rev_0 or '—' }} Cr</div><div class="mcard-lbl">Revenue</div></div>
+      <div class="mcard"><div class="mcard-val" style="color:{{ 'var(--green)' if (i.ni_0 or 0)>0 else 'var(--red)' }}">₹{{ i.ni_0 or '—' }} Cr</div><div class="mcard-lbl">Net Income</div></div>
+      <div class="mcard"><div class="mcard-val">{{ r.net_margin or '—' }}%</div><div class="mcard-lbl">Net Margin</div></div>
+    </div>
+    {% if data.years %}
+    <div class="chart-grid">
+      <div><div style="font-size:.68rem;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.07em">Revenue Trend</div><div style="height:160px"><canvas id="rev_chart"></canvas></div></div>
+      <div><div style="font-size:.68rem;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.07em">Net Income Trend</div><div style="height:160px"><canvas id="ni_chart"></canvas></div></div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- 4. CASH FLOW -->
+  <div class="rpt-section fi">
+    <div class="rpt-section-title">4. Cash Flow Analysis</div>
+    <div class="m3">
+      <div class="mcard"><div class="mcard-val" style="color:var(--blue)">₹{{ cf.ocf_0 or '—' }} Cr</div><div class="mcard-lbl">Operating CF</div></div>
+      <div class="mcard"><div class="mcard-val" style="color:var(--red)">₹{{ cf.cap_0 or '—' }} Cr</div><div class="mcard-lbl">CapEx</div></div>
+      <div class="mcard"><div class="mcard-val" style="color:{{ 'var(--green)' if (cf.fcf_0 or 0)>0 else 'var(--red)' }}">₹{{ cf.fcf_0 or '—' }} Cr</div><div class="mcard-lbl">Free Cash Flow</div></div>
+    </div>
+  </div>
+
+  <!-- 5. KEY RATIOS -->
+  <div class="rpt-section fi">
+    <div class="rpt-section-title">5. Key Ratios</div>
+    <div class="m4">
+      <div class="mcard"><div class="mcard-val">{{ r.current_ratio or '—' }}</div><div class="mcard-lbl">Current Ratio</div></div>
+      <div class="mcard"><div class="mcard-val">{{ r.de_ratio or '—' }}</div><div class="mcard-lbl">Debt/Equity</div></div>
+      <div class="mcard"><div class="mcard-val">{{ r.pe or '—' }}</div><div class="mcard-lbl">P/E Ratio</div></div>
+      <div class="mcard"><div class="mcard-val">{{ r.pb or '—' }}</div><div class="mcard-lbl">P/B Ratio</div></div>
+      <div class="mcard"><div class="mcard-val">{{ r.roe or '—' }}%</div><div class="mcard-lbl">ROE</div></div>
+      <div class="mcard"><div class="mcard-val">{{ r.roa or '—' }}%</div><div class="mcard-lbl">ROA</div></div>
+      <div class="mcard"><div class="mcard-val">{{ r.eps or '—' }}</div><div class="mcard-lbl">EPS</div></div>
+      <div class="mcard"><div class="mcard-val">{{ r.div_yield or '—' }}%</div><div class="mcard-lbl">Div Yield</div></div>
+    </div>
+  </div>
+
+  <!-- 6. DCF VALUATION -->
+  {% if dcf.ok %}
+  <div class="rpt-section fi">
+    <div class="rpt-section-title">6. DCF Valuation</div>
+    <div class="m3" style="margin-bottom:16px">
+      <div class="mcard"><div class="mcard-val" style="color:var(--purple)">₹{{ dcf.intrinsic }}</div><div class="mcard-lbl">Intrinsic Value</div></div>
+      <div class="mcard"><div class="mcard-val">₹{{ c.price }}</div><div class="mcard-lbl">Market Price</div></div>
+      {% if v.upside is not none %}
+      <div class="mcard"><div class="mcard-val" style="color:{{ 'var(--green)' if v.upside>0 else 'var(--red)' }}">{{ v.upside }}%</div><div class="mcard-lbl">Upside / Downside</div></div>
+      {% endif %}
+    </div>
+    <div style="font-size:.7rem;color:var(--muted);margin-bottom:10px">Assumptions: 10% growth · 12% discount · 4% terminal growth</div>
+    {% for yr in range(dcf.cash_flows|length) %}
+    <div class="dcf-row">
+      <div class="dcf-lbl">Year {{ yr+1 }} FCF</div>
+      <div class="dcf-val">₹{{ dcf.cash_flows[yr] }}</div>
+      <div class="dcf-lbl">PV</div>
+      <div class="dcf-val" style="color:var(--green)">₹{{ dcf.present_values[yr] }}</div>
+    </div>
+    {% endfor %}
+    <div class="dcf-row"><div class="dcf-lbl">Terminal Value</div><div class="dcf-val">₹{{ dcf.terminal_value }}</div><div class="dcf-lbl">Terminal PV</div><div class="dcf-val">₹{{ dcf.terminal_pv }}</div></div>
+    <div class="dcf-row"><div class="dcf-lbl">Intrinsic Value (Total PV)</div><div class="dcf-val" style="color:var(--purple)">₹{{ dcf.intrinsic }}</div></div>
+  </div>
+  {% endif %}
+
+  <!-- 7. WACC -->
+  {% if w.ok %}
+  <div class="rpt-section fi">
+    <div class="rpt-section-title">7. WACC Estimate</div>
+    <div class="wacc-row">
+      <div class="mcard"><div class="mcard-val" style="color:var(--blue)">{{ w.ke }}%</div><div class="mcard-lbl">Cost of Equity (CAPM)</div></div>
+      <div class="mcard"><div class="mcard-val">{{ w.kd }}%</div><div class="mcard-lbl">Cost of Debt</div></div>
+      <div class="mcard"><div class="mcard-val" style="color:var(--cyan)">{{ w.wacc }}%</div><div class="mcard-lbl">WACC</div></div>
+    </div>
+    <div style="font-size:.7rem;color:var(--muted);margin-top:10px">Rf = 7% (India 10Y) · Market Risk Premium = 5.5% · Tax Rate = {{ w.tax_rate }}%</div>
+  </div>
+  {% endif %}
+
+  <!-- 8. RISK ANALYSIS -->
+  <div class="rpt-section fi">
+    <div class="rpt-section-title">8. Risk Analysis</div>
+    {% for f in data.flags %}
+    <div class="flag {{ f.type }}">{{ '✅' if f.type=='ok' else '⚠️' if f.type=='warn' else '🚨' }} {{ f.msg }}</div>
+    {% endfor %}
+    {% if r.beta %}
+    <div style="margin-top:12px;font-size:.8rem;color:var(--soft)">Beta (Market Sensitivity): <strong style="font-family:var(--mono)">{{ r.beta }}</strong>
+      — {{ 'Defensive (low volatility)' if r.beta < 0.8 else 'High volatility' if r.beta > 1.5 else 'Moderate market sensitivity' }}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- 9. AUTO INSIGHTS -->
+  <div class="rpt-section fi">
+    <div class="rpt-section-title">9. Key Insights</div>
+    {% for ins in data.insights %}
+    <div class="insight {{ 'ok' if ins.icon=='✅' else 'warn' if ins.icon=='🟡' else 'bad' }}">
+      <span>{{ ins.icon }}</span><span>{{ ins.text }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- NEW REPORT BTN -->
+  <div style="text-align:center;margin-top:24px" class="fi">
+    <form method="POST" style="display:inline-flex;gap:10px;max-width:420px;width:100%">
+      <input type="text" name="ticker" class="fc-input" placeholder="Run another report…" required>
+      <button type="submit" class="fc-btn" style="flex-shrink:0">Generate →</button>
+    </form>
+  </div>
+
+  {% endif %}<!-- /data -->
+
+</div></div>
+
+{% if data and data.years %}
+<script>
+const yrs = {{ data.years | tojson }};
+const ta  = {{ data.balance.total_assets | tojson }};
+const eq  = {{ data.balance.equity | tojson }};
+const rev = {{ data.income.revenue | tojson }};
+const ni  = {{ data.income.net_income | tojson }};
+
+function mkBar(id, data, colors, labelText){
+  const el=document.getElementById(id); if(!el) return;
+  new Chart(el,{type:'bar',data:{labels:yrs.slice().reverse(),datasets:[{label:labelText,data:data.slice().reverse(),backgroundColor:Array.isArray(colors)?colors.slice().reverse():colors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'₹'+ctx.raw+' Cr'}}},scales:{x:{grid:{color:'rgba(59,130,246,.03)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(59,130,246,.04)'},ticks:{color:'#64748b',font:{size:9},callback:v=>v+'Cr'}}}}});
+}
+
+mkBar('ta_chart', ta, 'rgba(59,130,246,.65)', 'Total Assets');
+mkBar('eq_chart', eq, 'rgba(34,197,94,.65)',  'Equity');
+mkBar('rev_chart',rev,'rgba(6,182,212,.65)',   'Revenue');
+mkBar('ni_chart', ni, ni.map(v=>(v||0)>=0?'rgba(34,197,94,.65)':'rgba(239,68,68,.65)'), 'Net Income');
+</script>
+{% endif %}
+</body></html>

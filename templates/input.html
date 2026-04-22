@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCF Valuation — FinFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root {
+  --bg:        #060d1a;
+  --bg-2:      #0d1829;
+  --bg-card:   rgba(13,24,46,.75);
+  --bg-hov:    rgba(18,34,64,.9);
+  --border:    rgba(59,130,246,.13);
+  --border-hov:rgba(59,130,246,.35);
+  --blue:      #3b82f6;
+  --cyan:      #06b6d4;
+  --green:     #22c55e;
+  --green-bg:  rgba(34,197,94,.12);
+  --red:       #ef4444;
+  --red-bg:    rgba(239,68,68,.12);
+  --amber:     #f59e0b;
+  --amber-bg:  rgba(245,158,11,.12);
+  --text:      #f1f5f9;
+  --muted:     #64748b;
+  --soft:      #94a3b8;
+  --mono:      'JetBrains Mono', monospace;
+  --sans:      'Sora', 'Segoe UI', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: var(--sans); min-height: 100vh;
+}
+body::before {
+  content: ''; position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(59,130,246,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,.025) 1px, transparent 1px);
+  background-size: 52px 52px;
+}
+.z1 { position: relative; z-index: 1; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px 70px; }
+
+/* PAGE HEADER */
+.page-hdr { margin-bottom: 28px; }
+.page-hdr a { color: var(--blue); text-decoration: none; font-size: .75rem; }
+.page-hdr a:hover { text-decoration: underline; }
+.page-title { font-size: 1.5rem; font-weight: 700; letter-spacing: -.4px; margin-top: 6px; }
+.page-sub   { font-size: .78rem; color: var(--muted); margin-top: 3px; }
+
+/* LAYOUT */
+.layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
+
+/* CARD */
+.card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 18px; padding: 22px;
+  backdrop-filter: blur(12px);
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: .72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .09em;
+  color: var(--muted); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 6px;
+}
+.card-title::before {
+  content: ''; display: block;
+  width: 3px; height: 12px;
+  background: var(--blue); border-radius: 2px;
+}
+
+/* FORM FIELDS */
+.field { margin-bottom: 14px; }
+.field label {
+  display: block; font-size: .72rem; font-weight: 600;
+  color: var(--soft); margin-bottom: 5px;
+  text-transform: uppercase; letter-spacing: .05em;
+}
+.field input {
+  width: 100%;
+  background: rgba(255,255,255,.05); border: 1px solid var(--border);
+  border-radius: 9px; padding: 10px 13px;
+  color: var(--text); font-family: var(--sans); font-size: .88rem;
+  outline: none; transition: border-color .2s;
+}
+.field input::placeholder { color: var(--muted); }
+.field input:focus { border-color: var(--blue); }
+
+/* SLIDERS */
+.slider-wrap { display: flex; align-items: center; gap: 10px; }
+.slider-wrap input[type="range"] { flex: 1; accent-color: var(--blue); cursor: pointer; }
+.slider-val {
+  font-family: var(--mono); font-size: .85rem;
+  font-weight: 700; color: var(--blue);
+  min-width: 42px; text-align: right;
+}
+
+/* DIVIDER */
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* SUBMIT BTN */
+.submit-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--blue), var(--cyan));
+  border: none; color: #fff; padding: 12px;
+  border-radius: 10px; font-weight: 700; font-size: .9rem;
+  cursor: pointer; font-family: var(--sans); margin-top: 6px;
+  transition: opacity .15s;
+}
+.submit-btn:hover { opacity: .88; }
+
+/* PREVIEW BOX */
+.preview-box {
+  background: rgba(59,130,246,.07);
+  border: 1px solid rgba(59,130,246,.22);
+  border-radius: 10px; padding: 13px 15px; margin-bottom: 14px;
+}
+.pb-name { font-weight: 700; font-size: .9rem; margin-bottom: 2px; }
+.pb-meta { font-size: .7rem; color: var(--muted); }
+.pb-stats {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 8px; margin-top: 10px;
+}
+.pb-stat { text-align: center; }
+.pb-stat-v { font-family: var(--mono); font-size: .85rem; font-weight: 700; }
+.pb-stat-l { font-size: .62rem; color: var(--muted); margin-top: 2px; }
+
+/* VERDICT BOX */
+.verdict-box {
+  border-radius: 14px; padding: 18px 20px;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 14px;
+}
+.verdict-box.undervalued {
+  background: var(--green-bg);
+  border: 1px solid rgba(34,197,94,.25);
+}
+.verdict-box.overvalued {
+  background: var(--red-bg);
+  border: 1px solid rgba(239,68,68,.25);
+}
+.verdict-box.fair {
+  background: var(--amber-bg);
+  border: 1px solid rgba(245,158,11,.25);
+}
+.vb-icon   { font-size: 2rem; flex-shrink: 0; }
+.vb-tag    { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 3px; }
+.vb-tag.undervalued { color: var(--green); }
+.vb-tag.overvalued  { color: var(--red); }
+.vb-tag.fair        { color: var(--amber); }
+.vb-val    { font-family: var(--mono); font-size: 1.3rem; font-weight: 700; }
+.vb-desc   { font-size: .75rem; color: var(--soft); margin-top: 3px; }
+
+/* METRICS ROW */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px; margin-bottom: 16px;
+}
+.mr-card {
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+  border-radius: 10px; padding: 13px; text-align: center;
+}
+.mr-val { font-family: var(--mono); font-size: 1rem; font-weight: 700; }
+.mr-lbl { font-size: .62rem; color: var(--muted); margin-top: 3px; }
+
+/* PROJECTION TABLE */
+.proj-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px;
+  margin-top: 4px;
+}
+.proj-table th {
+  font-size: .65rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em;
+  color: var(--muted); padding: 0 12px 4px;
+  text-align: left;
+}
+.proj-table td {
+  padding: 10px 12px; font-size: .81rem;
+  background: rgba(255,255,255,.03);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+}
+.proj-table td:first-child {
+  border-left: 1px solid var(--border);
+  border-radius: 8px 0 0 8px;
+  color: var(--soft);
+}
+.proj-table td:last-child {
+  border-right: 1px solid var(--border);
+  border-radius: 0 8px 8px 0;
+  color: var(--green);
+  text-align: right;
+}
+
+/* EMPTY STATE */
+.empty-state {
+  text-align: center; padding: 40px 20px;
+  color: var(--muted);
+}
+.empty-state .es-icon { font-size: 2.5rem; margin-bottom: 12px; }
+.empty-state p { font-size: .88rem; line-height: 1.6; }
+.empty-state strong { color: var(--text); }
+
+.fi { animation: fadeUp .5s ease both; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+
+<body>
+<div class="z1">
+{% include 'navbar.html' %}
+
+<div class="wrap">
+
+  <!-- PAGE HEADER -->
+  <div class="page-hdr fi">
+    <a href="/tools">← Financial Analysis</a>
+    <div class="page-title">📊 DCF Valuation</div>
+    <div class="page-sub">Discounted cash flow — estimate the intrinsic value of any NSE stock</div>
+  </div>
+
+  <div class="layout">
+
+    <!-- ── LEFT: INPUT FORM ── -->
+    <div>
+      <div class="card fi">
+        <div class="card-title">Inputs</div>
+
+        {% if fin_data and fin_data.ok %}
+        <div class="preview-box">
+          <div class="pb-name">{{ fin_data.company.name }}</div>
+          <div class="pb-meta">{{ fin_data.company.sector }} · ₹{{ fin_data.company.price }}</div>
+          <div class="pb-stats">
+            <div class="pb-stat">
+              <div class="pb-stat-v">
+                {% if fin_data.cashflow.fcf_0 %}₹{{ fin_data.cashflow.fcf_0 }} Cr{% else %}—{% endif %}
+              </div>
+              <div class="pb-stat-l">FCF (Cr)</div>
+            </div>
+            <div class="pb-stat">
+              <div class="pb-stat-v">{{ fin_data.ratios.pe or '—' }}</div>
+              <div class="pb-stat-l">P/E</div>
+            </div>
+            <div class="pb-stat">
+              <div class="pb-stat-v">{{ fin_data.ratios.roe or '—' }}%</div>
+              <div class="pb-stat-l">ROE</div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <form method="POST">
+
+          <div class="field">
+            <label>Stock Ticker (optional — auto-fetches FCF)</label>
+            <input type="text" name="ticker" value="{{ ticker }}" placeholder="e.g. RELIANCE.NS">
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="field">
+            <label>Free Cash Flow (₹ raw — leave 0 to auto-fetch from ticker)</label>
+            <input
+              type="number"
+              name="fcf"
+              step="any"
+              value="{{ request.form.get('fcf', '') }}"
+              placeholder="e.g. 50000000000">
+          </div>
+
+          <div class="field">
+            <label>Growth Rate %</label>
+            <div class="slider-wrap">
+              <input
+                type="range" min="0" max="40" step="0.5"
+                value="{{ request.form.get('growth', '10') }}"
+                oninput="syncSlider(this,'gv','growth_hidden')">
+              <span class="slider-val" id="gv">{{ request.form.get('growth', '10') }}%</span>
+              <input type="hidden" name="growth" id="growth_hidden" value="{{ request.form.get('growth', '10') }}">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Discount Rate %</label>
+            <div class="slider-wrap">
+              <input
+                type="range" min="5" max="25" step="0.5"
+                value="{{ request.form.get('discount', '12') }}"
+                oninput="syncSlider(this,'dv','discount_hidden')">
+              <span class="slider-val" id="dv">{{ request.form.get('discount', '12') }}%</span>
+              <input type="hidden" name="discount" id="discount_hidden" value="{{ request.form.get('discount', '12') }}">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Terminal Growth Rate %</label>
+            <div class="slider-wrap">
+              <input
+                type="range" min="0" max="8" step="0.25"
+                value="{{ request.form.get('terminal_growth', '4') }}"
+                oninput="syncSlider(this,'tv','terminal_hidden')">
+              <span class="slider-val" id="tv">{{ request.form.get('terminal_growth', '4') }}%</span>
+              <input type="hidden" name="terminal_growth" id="terminal_hidden" value="{{ request.form.get('terminal_growth', '4') }}">
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn">
+            Calculate Intrinsic Value →
+          </button>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- ── RIGHT: RESULTS ── -->
+    <div>
+
+      {% if error %}
+      <div class="card fi" style="border-color: rgba(239,68,68,.3);">
+        <div style="color: var(--red); font-size: .85rem;">⚠️ {{ error }}</div>
+      </div>
+      {% endif %}
+
+      {% if dcf_result and dcf_result.ok %}
+
+        {# Determine verdict class safely #}
+        {% set raw_verdict = dcf_result.verdict if dcf_result.verdict is defined else '' %}
+        {% if raw_verdict == 'Undervalued' %}
+          {% set verdict_class = 'undervalued' %}
+          {% set verdict_icon  = '🟢' %}
+        {% elif raw_verdict == 'Overvalued' %}
+          {% set verdict_class = 'overvalued' %}
+          {% set verdict_icon  = '🔴' %}
+        {% else %}
+          {% set verdict_class = 'fair' %}
+          {% set verdict_icon  = '🟡' %}
+        {% endif %}
+
+        <!-- VERDICT BANNER -->
+        <div class="verdict-box {{ verdict_class }} fi">
+          <div class="vb-icon">{{ verdict_icon }}</div>
+          <div>
+            <div class="vb-tag {{ verdict_class }}">
+              {% if raw_verdict %}{{ raw_verdict }}{% else %}Result{% endif %}
+            </div>
+            <div class="vb-val">
+              Intrinsic Value: ₹{{ dcf_result.intrinsic | round(2) }}
+            </div>
+            {% if dcf_result.market_price is defined %}
+            <div class="vb-desc">
+              Market Price: ₹{{ dcf_result.market_price }}
+              &nbsp;·&nbsp;
+              {% if dcf_result.upside > 0 %}
+                {{ dcf_result.upside }}% upside
+              {% else %}
+                {{ (dcf_result.upside | abs) }}% downside
+              {% endif %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- METRICS -->
+        <div class="metrics-row fi">
+          <div class="mr-card">
+            <div class="mr-val">₹{{ dcf_result.intrinsic }}</div>
+            <div class="mr-lbl">Intrinsic Value</div>
+          </div>
+          <div class="mr-card">
+            <div class="mr-val">₹{{ dcf_result.terminal_value | round(0) | int }}</div>
+            <div class="mr-lbl">Terminal Value</div>
+          </div>
+          <div class="mr-card">
+            <div class="mr-val">₹{{ dcf_result.terminal_pv | round(0) | int }}</div>
+            <div class="mr-lbl">Terminal PV</div>
+          </div>
+          {% if dcf_result.upside is defined %}
+          <div class="mr-card">
+            <div class="mr-val" style="color: {{ 'var(--green)' if dcf_result.upside > 0 else 'var(--red)' }};">
+              {{ dcf_result.upside }}%
+            </div>
+            <div class="mr-lbl">Upside / Downside</div>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- PROJECTION CHART -->
+        <div class="card fi">
+          <div class="card-title">5-Year Cash Flow Projection</div>
+          <div style="height: 220px;">
+            <canvas id="dcfChart"></canvas>
+          </div>
+        </div>
+
+        <!-- PROJECTION TABLE -->
+        <div class="card fi">
+          <div class="card-title">Projection Detail</div>
+          <table class="proj-table">
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th>Projected FCF (₹)</th>
+                <th>Present Value (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for i in range(dcf_result.cash_flows | length) %}
+              <tr>
+                <td>Year {{ i + 1 }}</td>
+                <td>{{ dcf_result.cash_flows[i] | round(2) }}</td>
+                <td>{{ dcf_result.present_values[i] | round(2) }}</td>
+              </tr>
+              {% endfor %}
+              <tr>
+                <td colspan="2" style="color:var(--soft)">Terminal Value</td>
+                <td>{{ dcf_result.terminal_value | round(2) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      {% else %}
+      <!-- EMPTY STATE -->
+      <div class="card fi">
+        <div class="empty-state">
+          <div class="es-icon">📊</div>
+          <p>
+            Enter a ticker symbol or a Free Cash Flow value,<br>
+            then click <strong>Calculate Intrinsic Value</strong> to see results.
+          </p>
+          <p style="margin-top: 10px; font-size: .78rem;">
+            Tip: entering a ticker auto-fetches FCF, so you can leave the FCF field at 0.
+          </p>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div><!-- /layout -->
+</div><!-- /wrap -->
+</div><!-- /z1 -->
+
+{% if dcf_result and dcf_result.ok %}
+<script>
+const cfs = {{ dcf_result.cash_flows | tojson }};
+const pvs = {{ dcf_result.present_values | tojson }};
+
+new Chart(document.getElementById('dcfChart'), {
+  type: 'bar',
+  data: {
+    labels: cfs.map((_, i) => 'Year ' + (i + 1)),
+    datasets: [
+      {
+        label: 'Projected FCF',
+        data: cfs,
+        backgroundColor: 'rgba(59,130,246,.65)',
+        borderRadius: 5,
+      },
+      {
+        label: 'Present Value',
+        data: pvs,
+        backgroundColor: 'rgba(34,197,94,.65)',
+        borderRadius: 5,
+      },
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: '#94a3b8', font: { size: 11 } } },
+      tooltip: {
+        callbacks: {
+          label: ctx => ' ₹' + Number(ctx.raw).toLocaleString('en-IN')
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: 'rgba(59,130,246,.04)' },
+        ticks: { color: '#64748b' }
+      },
+      y: {
+        grid: { color: 'rgba(59,130,246,.05)' },
+        ticks: {
+          color: '#64748b',
+          callback: v => '₹' + Number(v).toLocaleString('en-IN')
+        }
+      }
+    }
+  }
+});
+</script>
+{% endif %}
+
+<script>
+/* Sync slider → visible label + hidden input */
+function syncSlider(el, labelId, hiddenId) {
+  document.getElementById(labelId).textContent  = el.value + '%';
+  document.getElementById(hiddenId).value       = el.value;
+}
+</script>
+
+</body>
+</html>
